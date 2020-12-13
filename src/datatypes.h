@@ -68,6 +68,10 @@ typedef struct { // For current Day and Day 1, 2, 3, etc
   float bid; // 1839.13
 } GoldCourse_record_type;
 
+struct WiFiSecrets{
+  String SSID;
+  String Pass;
+}; 
 
 
 

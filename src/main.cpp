@@ -20,10 +20,10 @@ extern "C" {
 #include <CRC32.h>    //to check if the data saved in RTC RAM is valid or gobbledeegook
 #include <LittleFS.h> //to save the settings of the applications such as API keys and such
 
-
 //Application Libs
 #include "Applications/WeatherApp.h" // the weather application
 #include "Applications/GoldApp.h" // the weather application
+#include "Applications/WiFiManagerApp.h" //the app to set the WiFi Password and some settings.
 #include "datatypes.h" //datatypes for various objects related to the APIs
 
 
@@ -42,6 +42,7 @@ void loop();
 void BeginSleep(int);
 void BackupStateToRTCRAM();
 void ReadStateFromRTCRAM();
+void RunWiFiManager();
 
 
 //******************************************************************
@@ -65,34 +66,14 @@ void ReadStateFromRTCRAM();
 #define BACKUPLENGTH 8  //number of bytes to be saved in RTC memory, excluding 4 byte CRC
 
 //Structs that pass on the needed initial settings to the apps.
+WiFiSecrets wiFiSecrets[1];
 Weather_APP_information weatherAppSettings;
 Gold_APP_information goldAppSettings;
 
 //Application variables
-uint8_t active_program = 2;
+uint8_t active_program = 1;
 bool metric = true; //change to false for backwards system
 bool FSReady = false;
-
-//WifiManager to manage connections
-WiFiManager wm; 
-//custom parameters input through WiFiManager Webserver
-const char* program_selection_str =
-  "<p>Please select e-paper mode:</p>"
-  "<input style='width: auto; margin: 0 10px 10px 10px;' type='radio' id='choice1' name='program_selection' value='1' checked>"
-  "<label for='choice1'>Gold API</label><br>"
-  "<input style='width: auto; margin: 10px 10px 10px 10px;' type='radio' id='choice2' name='program_selection' value='2'>"
-  "<label for='choice2'>Weather API</label><br>"
-  "<input style='width: auto; margin: 10px 10px 0 10px;' type='radio' id='choice3' name='program_selection' value='3'>"
-  "<label for='choice3'>Haiku</label><br>";
-WiFiManagerParameter program_selection(program_selection_str);
-const char* API_key_str = "<p>https://www.goldapi.io/ API Key</p>";
-WiFiManagerParameter API_key(API_key_str);
-WiFiManagerParameter API_key_inputfield("API_key_inputfield", "API Key GOLD API", "0", 30);
-const char* cert_thumbprint_str = "<p>https://www.goldapi.io/ Certification Thumbprint</p>";
-WiFiManagerParameter cert_thumbprint(cert_thumbprint_str);
-WiFiManagerParameter cert_thumbprint_inputfield("cert_thumbprint_inputfield", "Certificate Thumbprint", "0", 40);
-//Careful : checkbox returns Null if not selected and the value of below defined when selected.
-//WiFiManagerParameter checkbox("checkbox", "Een checkbox", "Checkbox selected", 18,"placeholder=\"Custom Field Placeholder\" type=\"checkbox\""); // custom html type
 
 //E-paper instance, this driver is for the Heltec 1.54 inch panel with SSD1681 display controller
 GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> display(GxEPD2_154_D67(/*CS=5*/ EPD_CS, /*DC=17*/ EPD_DC, /*RST=16*/ EPD_RST, /*BUSY=4*/ EPD_BUSY)); //2-colour display Heltec B/W
@@ -148,6 +129,23 @@ void StoreWeatherAPISettings(){
   Appinfo.close();
 }
 
+void StoreWiFiSecrets(){
+  initFS();
+  File Appinfo = LittleFS.open(F("/WiFiSecrets.txt"), "w");
+  Serial.println("Saving the following info to Flash:");
+  Serial.println(wiFiSecrets[0].SSID);
+  Serial.println(wiFiSecrets[0].Pass);
+  String toSave = wiFiSecrets[0].SSID + '\0' + wiFiSecrets[0].Pass + '\0';
+  Serial.println(toSave);
+  Serial.print("Size: ");
+  Serial.println(toSave.length());
+  for(uint i=0; i < toSave.length(); i++){
+    Serial.println(toSave[i]);
+    Appinfo.write(toSave[i]);
+  }
+  Appinfo.close();
+}
+
 void RecoverGoldAPISettings(){
   initFS();
   File Appinfo = LittleFS.open(F("/GoldAPP.txt"), "r");
@@ -161,7 +159,7 @@ void RecoverGoldAPISettings(){
   for (uint i =0; i< sizeof(goldAppSettings.fingerprint); i++){
     data[i] = Appinfo.read();
   }
-  memcpy (goldAppSettings.fingerprint , data , sizeof(goldAppSettings.fingerprint));
+  memcpy (&goldAppSettings.fingerprint , data , sizeof(goldAppSettings.fingerprint));
 
   Serial.println("Info recovered : ");
   Serial.println(goldAppSettings.gold_api_key);
@@ -211,12 +209,40 @@ void RecoverWeatherAPISettings(){
   Serial.println(weatherAppSettings.Language);
   Serial.println(weatherAppSettings.server);
   Serial.println(weatherAppSettings.weather_api_key);
-
 }
+
+void RecoverWiFiSecrets(){
+  initFS();
+
+  Serial.println("Attempting recovery of Wifi Settings");
+
+  File Appinfo = LittleFS.open(F("/WiFiSecrets.txt"), "r");
+  char data[50];
+  for (uint i =0; i<50; i++){
+    data[i] = Appinfo.read();
+    Serial.println(data[i]);
+    if(data[i] == '\0') break;
+  }
+  Serial.println(data);
+  wiFiSecrets[0].SSID = data;
+
+  for (uint i =0; i<50; i++){
+    data[i] = Appinfo.read();
+    Serial.println(data[i]);
+    if(data[i] == '\0') break;
+  }
+  Serial.println(data);
+  wiFiSecrets[0].Pass = data;
+  
+  Appinfo.close();
+  Serial.println("Secrets recovered : ");
+  Serial.println(wiFiSecrets[0].SSID);
+  Serial.println(wiFiSecrets[0].Pass);
+}
+
 
 void SetupAPISettings(int active_program){
   //recovering the API settings from the file system depending on the running application.
-  //FSInfoReport();
   initFS();
   switch(active_program){
     case 1:
@@ -254,89 +280,45 @@ void SetupAPISettings(int active_program){
 
  void ConnectToWifi(){
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-  wm.setEnableConfigPortal(false);
-  //wm.setConfigPortalTimeout(0);
-  if (!wm. wifiConnectDefault()){
-      DisplayFunctions displayFunctions(&display, metric);
+  initFS();
+  if (!LittleFS.exists(F("/WiFiSecrets.txt"))){
+      RunWiFiManager();  
+  }
+  RecoverWiFiSecrets();
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wiFiSecrets[0].SSID, wiFiSecrets[0].Pass);
+  uint counter = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    Serial.print(".");
+    if(millis()>counter+10000){
       displayFunctions.initialiseDisplay();
       displayFunctions.DisplayNoWiFi();
       Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
       BeginSleep(0); //triggers 3 hours of sleep
+      }
     }
-  //if you get here you have connected to the WiFi    
-  Serial.println("connected...yeey :)");
-} 
+  } 
 
-void saveParamCallback(){
-  Serial.println("[CALLBACK] saveParamCallback fired");
-  //Getting the value of the radio buttons from the server
-
-  //recover all current settings from the installed API's.
-  SetupAPISettings(1);
-  SetupAPISettings(2);
-  
-  String programSelection;
-  if(wm.server->hasArg("program_selection")) {
-    programSelection = wm.server->arg("program_selection");
-  }
-  Serial.println("Selected program = " + programSelection);
-  //Set the active program accordingly :
-  if (programSelection == "1"){
-    active_program = 1;
-  }
-  else if (programSelection == "2"){
-    active_program = 2;
-  }
-  else if (programSelection == "3"){
-    active_program = 3;
-  }
-
-  Serial.print("Submitted API key = ");
-  goldAppSettings.gold_api_key = strdup(API_key_inputfield.getValue());
-  Serial.println(goldAppSettings.gold_api_key);
-
-  Serial.print("Submitted Certificate Thumbprint = ");
-  const char* thumprint=cert_thumbprint_inputfield.getValue();
-  Serial.println(thumprint);
-
-  //Conversion of string to fingerprint
-  Serial.println("Processing thumbprint");
-  char hexstring[3] = {'0','0','\0'};
-  uint8_t fingerprint[20];
-  for (int i=0;i<20;i++){
-    int position = i*2;
-    hexstring[0]=thumprint[position];
-    hexstring[1]=thumprint[position+1];
-    hexstring[2] = '\0';
-    Serial.print("Read hex number: ");
-    Serial.print(hexstring);
-    Serial.print(" ");
-    fingerprint[i] = (uint8_t)strtol(hexstring, NULL, 16);
-  }
-  Serial.print('\n');
-  Serial.print("attempted conversion to uint8_t: ");
-  for (int i=0;i<20;i++){
-    Serial.print(fingerprint[i]);
-    Serial.print(" ");
-  }
-  memcpy(goldAppSettings.fingerprint, fingerprint, sizeof(uint8_t)*20);
-
-  StoreWeatherAPISettings();
-  StoreGoldAPISettings();
-
-
-  //TODO: Here all the parameters should be saved to the filesystem as well!
-
-  //Careful : checkbox returns Null if not selected and the value of above defined when selected.
-  /* Currently not using checkbox
-  Serial.print("Submitted checkbox = ");
-  String checkBoxSelection;
-  if(wm.server->hasArg("checkbox")) {
-    programSelection = wm.server->arg("checkbox");
-  }
-  Serial.println(checkBoxSelection);
-  */
+void RunWiFiManager(){
+    //recover all current settings from the installed API's.
+    SetupAPISettings(1);
+    SetupAPISettings(2);
+    WiFiManagerApp wiFiManagerApp(&goldAppSettings, &weatherAppSettings, wiFiSecrets);
+    bool returnvalue = wiFiManagerApp.Run();
+    StoreWiFiSecrets();
+    StoreWeatherAPISettings();
+    StoreGoldAPISettings();
+    if(returnvalue){
+      //Wifi configured correctly, restarting the system (to free up RAM for other apps)
+      ESP.restart();
+    }
+    else{
+      //WiFi not set up correctly, go to sleep.
+      BeginSleep(0);
+    }
 }
+
 
 void ResetWifiRoutine(){
     static const int NumberOfSeconds = 3;
@@ -348,65 +330,10 @@ void ResetWifiRoutine(){
     }
     Serial.println();
     if (millis()>StartTime+NumberOfSeconds*1000UL){
-        Serial.println("Resetting WiFi config");
-        wm.resetSettings();
-          //test custom html input type(checkbox)
-        //wm.addParameter(&checkbox); 
-        // test custom html(radio)
-        wm.addParameter(&program_selection);
-        // add a custom input field
-        wm.addParameter(&API_key);
-        wm.addParameter(&API_key_inputfield);
-        wm.addParameter(&cert_thumbprint);
-        wm.addParameter(&cert_thumbprint_inputfield);
-
-        wm.setSaveParamsCallback(saveParamCallback);
-
-        // custom menu via array or vector
-        // 
-        // menu tokens, "wifi","wifinoscan","info","param","close","sep","erase","restart","exit" (sep is seperator) (if param is in menu, params will not show up in wifi page!)
-        // const char* menu[] = {"wifi","info","param","sep","restart","exit"}; 
-        // wm.setMenu(menu,6);
-        std::vector<const char *> menu = {"wifi","info","param","close","sep","restart","exit"};
-        wm.setMenu(menu);
-
-        // set dark theme
-        wm.setClass("invert");
-
-
-        //set static ip
-        // wm.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0)); // set static ip,gw,sn
-        // wm.setShowStaticFields(true); // force show static ip fields
-        // wm.setShowDnsFields(true);    // force show dns field always
-
-        // wm.setConnectTimeout(20); // how long to try to connect for before continuing
-        wm.setConfigPortalTimeout(300); // auto close configportal after n seconds
-        // wm.setCaptivePortalEnable(false); // disable captive portal redirection
-        // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
-
-        // wifi scan settings
-        // wm.setRemoveDuplicateAPs(false); // do not remove duplicate ap names (true)
-        // wm.setMinimumSignalQuality(20);  // set min RSSI (percentage) to show in scans, null = 8%
-        // wm.setShowInfoErase(false);      // do not show erase button on info page
-        // wm.setScanDispPerc(true);       // show RSSI as percentage not graph icons
-        
-        // wm.setBreakAfterConfig(true);   // always exit configportal even if wifi save fail
-        bool res;
-        // res = wm.autoConnect(); // auto generated AP name from chipid
-        res = wm.autoConnect("YpsillonBox"); // anonymous ap
-        // res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
-
-        if(!res) {
-          Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
-          BeginSleep(0); //triggers 3 hours of sleep
-        } 
-        else {
-          //if you get here you have connected to the WiFi    
-          Serial.println("connected...yeey :), restarting the app"); //If i don't restart there is not enough memory in the heap to run the apps., Wifimanager doesn't clean up...
-          ESP.restart();
-        }
+        RunWiFiManager();
     }
 }
+
 
 void NTP_Sync_Callback(){
   rtc_synced=true;
@@ -438,7 +365,6 @@ void SetupTime() {
   if(!rtc_synced){
     configTime(TIMEZONE, "be.pool.ntp.org");
     settimeofday_cb(NTP_Sync_Callback);
-    
   }
   else{
     Serial.println("time was already synced, using RTC");
@@ -531,9 +457,6 @@ void ReadStateFromRTCRAM(){
 
 
 void setup() {
-  
-  active_program = 2;
-
   StartTime = millis();
   Serial.begin(115200);
   Serial.println("\n Starting");
@@ -567,12 +490,12 @@ void setup() {
       SetupAPISettings(active_program);
       if(active_program ==1){
             Serial.println("GoldApp will be started");
-            GoldApp goldApp(&goldAppSettings,&display,&timeString,&dateString, metric);
+            GoldApp goldApp(&goldAppSettings,&displayFunctions,&timeString,&dateString, metric);
             goldApp.Run();
       }
       else if(active_program == 2){
             Serial.println("WeatherApp will be started");
-            WeatherApp weatherApp(&weatherAppSettings,&display,&timeString,&dateString, metric);
+            WeatherApp weatherApp(&weatherAppSettings,&displayFunctions,&timeString,&dateString, metric);
             weatherApp.Run();
       }
     }

@@ -116,7 +116,7 @@ void DisplayFunctions::DisplayRain(int x, int y) {
 }
 //#########################################################################################
 void DisplayFunctions::DisplayWxIcon(int x, int y, String IconName, bool LargeSize) {
-  Serial.println(IconName);
+  //Serial.println(IconName);
   if      (IconName == "01d" || IconName == "01n") Sunny(x, y,       LargeSize, IconName);
   else if (IconName == "02d" || IconName == "02n") MostlySunny(x, y, LargeSize, IconName);
   else if (IconName == "03d" || IconName == "03n") Cloudy(x, y,      LargeSize, IconName);

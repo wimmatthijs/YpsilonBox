@@ -1,9 +1,9 @@
 #include "GoldApp.h"
 // Fingerprint for demo URL, expires on June 2, 2021, needs to be updated well before this date
 
-GoldApp::GoldApp(Gold_APP_information* _settings,GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT>* _displayPointer, String* _Time_str, String* _Date_str, bool _metric){
+GoldApp::GoldApp(Gold_APP_information* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool _metric){
   settings = _settings;
-  displayPointer = _displayPointer;
+  displayFunctions = _displayFunctions;
   Time_str = _Time_str;
   Date_str = _Date_str;
   metric = _metric;
@@ -19,10 +19,10 @@ void GoldApp::Run() {
     HTTPClient https;
     bool gotGold, gotSilver = false;
     
-    Serial.print("[HTTPS] begin for GOLD...\n");
+    //Serial.print("[HTTPS] begin for GOLD...\n");
     if (https.begin(*client, "https://www.goldapi.io/api/XAU/EUR")) {  // HTTPS
 
-      Serial.print("[HTTPS] GET...\n");
+      //Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
       https.addHeader("x-access-token","goldapi-dwpk2uki9n7dtq-io");
       https.addHeader("Content-Type","application/json");
@@ -31,7 +31,7 @@ void GoldApp::Run() {
       // httpCode will be negative on error
       if (httpCode > 0) {
         // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+        //Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
         // file found at server
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -62,25 +62,25 @@ void GoldApp::Run() {
             CurrentCourses[0].high_price_g = troy_ounce_to_g(CurrentCourses[0].high_price_to);
 
 
-            Serial.print("timestamp: ");                    Serial.println(CurrentCourses[0].timestamp);
-            Serial.print("metal: ");                        Serial.println(CurrentCourses[0].metal);
-            Serial.print("currency: ");                     Serial.println(CurrentCourses[0].currency);
-            Serial.print("exchange: ");                     Serial.println(CurrentCourses[0].exchange);
-            Serial.print("symbol: ");                       Serial.println(CurrentCourses[0].symbol);
-            Serial.print("prev_close_price: Troy Ounce ");  Serial.println(CurrentCourses[0].prev_close_price_to);
-            Serial.print("open_price: Troy Ounce ");        Serial.println(CurrentCourses[0].open_price_to);
-            Serial.print("low_price: Troy Ounce ");         Serial.println(CurrentCourses[0].low_price_to);
-            Serial.print("high_price: Troy Ounce ");        Serial.println(CurrentCourses[0].high_price_to);
-            Serial.print("open_time: ");                    Serial.println(CurrentCourses[0].open_time);
-            Serial.print("price: ");                        Serial.println(CurrentCourses[0].price);
-            Serial.print("ch: ");                           Serial.println(CurrentCourses[0].ch);
-            Serial.print("chp: ");                          Serial.println(CurrentCourses[0].chp);
-            Serial.print("ask: ");                          Serial.println(CurrentCourses[0].ask);
-            Serial.print("bid: ");                          Serial.println(CurrentCourses[0].bid);
-            Serial.print("prev_close_price: Gram ");        Serial.println(CurrentCourses[0].prev_close_price_g);
-            Serial.print("open_price: Gram ");              Serial.println(CurrentCourses[0].open_price_g);
-            Serial.print("low_price: Gram ");               Serial.println(CurrentCourses[0].low_price_g);
-            Serial.print("high_price: Gram ");              Serial.println(CurrentCourses[0].high_price_g);
+            //Serial.print("timestamp: ");                    //Serial.println(CurrentCourses[0].timestamp);
+            //Serial.print("metal: ");                        //Serial.println(CurrentCourses[0].metal);
+            //Serial.print("currency: ");                     //Serial.println(CurrentCourses[0].currency);
+            //Serial.print("exchange: ");                     //Serial.println(CurrentCourses[0].exchange);
+            //Serial.print("symbol: ");                       //Serial.println(CurrentCourses[0].symbol);
+            //Serial.print("prev_close_price: Troy Ounce ");  //Serial.println(CurrentCourses[0].prev_close_price_to);
+            //Serial.print("open_price: Troy Ounce ");        //Serial.println(CurrentCourses[0].open_price_to);
+            //Serial.print("low_price: Troy Ounce ");         //Serial.println(CurrentCourses[0].low_price_to);
+            //Serial.print("high_price: Troy Ounce ");        //Serial.println(CurrentCourses[0].high_price_to);
+            //Serial.print("open_time: ");                    //Serial.println(CurrentCourses[0].open_time);
+            //Serial.print("price: ");                        //Serial.println(CurrentCourses[0].price);
+            //Serial.print("ch: ");                           //Serial.println(CurrentCourses[0].ch);
+            //Serial.print("chp: ");                          //Serial.println(CurrentCourses[0].chp);
+            //Serial.print("ask: ");                          //Serial.println(CurrentCourses[0].ask);
+            //Serial.print("bid: ");                          //Serial.println(CurrentCourses[0].bid);
+            //Serial.print("prev_close_price: Gram ");        //Serial.println(CurrentCourses[0].prev_close_price_g);
+            //Serial.print("open_price: Gram ");              //Serial.println(CurrentCourses[0].open_price_g);
+            //Serial.print("low_price: Gram ");               //Serial.println(CurrentCourses[0].low_price_g);
+            //Serial.print("high_price: Gram ");              //Serial.println(CurrentCourses[0].high_price_g);
         
             gotGold = true;
         }
@@ -92,10 +92,10 @@ void GoldApp::Run() {
       ErrorMessage();
       return;
     }
-    Serial.print("[HTTPS] begin for Silver...\n");
+    //Serial.print("[HTTPS] begin for Silver...\n");
     if (https.begin(*client, "https://www.goldapi.io/api/XAG/EUR")) {  // HTTPS
 
-      Serial.print("[HTTPS] GET...\n");
+      //Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
       https.addHeader("x-access-token","goldapi-dwpk2uki9n7dtq-io");
       https.addHeader("Content-Type","application/json");
@@ -104,7 +104,7 @@ void GoldApp::Run() {
       // httpCode will be negative on error
       if (httpCode > 0) {
         // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+        //Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
         // file found at server
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -135,25 +135,25 @@ void GoldApp::Run() {
             CurrentCourses[1].high_price_g = troy_ounce_to_g(CurrentCourses[1].high_price_to);
 
 
-            Serial.print("timestamp: ");                    Serial.println(CurrentCourses[1].timestamp);
-            Serial.print("metal: ");                        Serial.println(CurrentCourses[1].metal);
-            Serial.print("currency: ");                     Serial.println(CurrentCourses[1].currency);
-            Serial.print("exchange: ");                     Serial.println(CurrentCourses[1].exchange);
-            Serial.print("symbol: ");                       Serial.println(CurrentCourses[1].symbol);
-            Serial.print("prev_close_price: Troy Ounce ");  Serial.println(CurrentCourses[1].prev_close_price_to);
-            Serial.print("open_price: Troy Ounce ");        Serial.println(CurrentCourses[1].open_price_to);
-            Serial.print("low_price: Troy Ounce ");         Serial.println(CurrentCourses[1].low_price_to);
-            Serial.print("high_price: Troy Ounce ");        Serial.println(CurrentCourses[1].high_price_to);
-            Serial.print("open_time: ");                    Serial.println(CurrentCourses[1].open_time);
-            Serial.print("price: ");                        Serial.println(CurrentCourses[1].price);
-            Serial.print("ch: ");                           Serial.println(CurrentCourses[1].ch);
-            Serial.print("chp: ");                          Serial.println(CurrentCourses[1].chp);
-            Serial.print("ask: ");                          Serial.println(CurrentCourses[1].ask);
-            Serial.print("bid: ");                          Serial.println(CurrentCourses[1].bid);
-            Serial.print("prev_close_price: Gram ");        Serial.println(CurrentCourses[1].prev_close_price_g);
-            Serial.print("open_price: Gram ");              Serial.println(CurrentCourses[1].open_price_g);
-            Serial.print("low_price: Gram ");               Serial.println(CurrentCourses[1].low_price_g);
-            Serial.print("high_price: Gram ");              Serial.println(CurrentCourses[1].high_price_g);
+            //Serial.print("timestamp: ");                    //Serial.println(CurrentCourses[1].timestamp);
+            //Serial.print("metal: ");                        //Serial.println(CurrentCourses[1].metal);
+            //Serial.print("currency: ");                     //Serial.println(CurrentCourses[1].currency);
+            //Serial.print("exchange: ");                     //Serial.println(CurrentCourses[1].exchange);
+            //Serial.print("symbol: ");                       //Serial.println(CurrentCourses[1].symbol);
+            //Serial.print("prev_close_price: Troy Ounce ");  //Serial.println(CurrentCourses[1].prev_close_price_to);
+            //Serial.print("open_price: Troy Ounce ");        //Serial.println(CurrentCourses[1].open_price_to);
+            //Serial.print("low_price: Troy Ounce ");         //Serial.println(CurrentCourses[1].low_price_to);
+            //Serial.print("high_price: Troy Ounce ");        //Serial.println(CurrentCourses[1].high_price_to);
+            //Serial.print("open_time: ");                    //Serial.println(CurrentCourses[1].open_time);
+            //Serial.print("price: ");                        //Serial.println(CurrentCourses[1].price);
+            //Serial.print("ch: ");                           //Serial.println(CurrentCourses[1].ch);
+            //Serial.print("chp: ");                          //Serial.println(CurrentCourses[1].chp);
+            //Serial.print("ask: ");                          //Serial.println(CurrentCourses[1].ask);
+            //Serial.print("bid: ");                          //Serial.println(CurrentCourses[1].bid);
+            //Serial.print("prev_close_price: Gram ");        //Serial.println(CurrentCourses[1].prev_close_price_g);
+            //Serial.print("open_price: Gram ");              //Serial.println(CurrentCourses[1].open_price_g);
+            //Serial.print("low_price: Gram ");               //Serial.println(CurrentCourses[1].low_price_g);
+            //Serial.print("high_price: Gram ");              //Serial.println(CurrentCourses[1].high_price_g);
 
             gotSilver = true;
         }
@@ -168,7 +168,6 @@ void GoldApp::Run() {
     }
     WiFi.mode(WIFI_OFF); // Reduces power consumption
     if(gotGold && gotSilver){
-      displayFunctions = new DisplayFunctions(displayPointer, metric);
       displayFunctions->setTimeStrings(Time_str, Date_str);
       displayFunctions->setGoldCourse(CurrentCourses);
       displayFunctions->initialiseDisplay();

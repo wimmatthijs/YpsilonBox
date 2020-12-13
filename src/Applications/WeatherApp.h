@@ -24,7 +24,7 @@ class WeatherApp{
     bool metric;
 
     public:
-    WeatherApp(Weather_APP_information* _settings,GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT>* _displayPointer, String* _Time_str, String* _Date_str, bool metric);
+    WeatherApp(Weather_APP_information* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool metric);
     void Run();
 
     private:
