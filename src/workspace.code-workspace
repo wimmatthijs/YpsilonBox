@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"name": "Secret-Santa-2020",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"fstream": "cpp",
+			"iosfwd": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"sstream": "cpp",
+			"streambuf": "cpp"
+		}
+	}
+}
