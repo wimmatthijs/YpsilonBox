@@ -1,6 +1,6 @@
 #include "WeatherApp.h"
 
-WeatherApp::WeatherApp(Weather_APP_information* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool _metric){
+WeatherApp::WeatherApp(WeatherAppSettings* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool _metric){
   settings = _settings;
   displayFunctions = _displayFunctions;
   Time_str = _Time_str;

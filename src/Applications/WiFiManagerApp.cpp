@@ -1,24 +1,29 @@
 #include "WiFiManagerApp.h"
 
-WiFiManagerApp::WiFiManagerApp(Gold_APP_information* _gold_settings,Weather_APP_information* _weather_settings,WiFiSecrets* _wifi_secrets){
-        gold_settings = _gold_settings;
-        weather_settings = _weather_settings;
-        wifi_secrets = _wifi_secrets;
+WiFiManagerApp::WiFiManagerApp(DisplayFunctions* _displayFunctions){
+  displayFunctions = _displayFunctions;
 }
 
 bool WiFiManagerApp::Run(){
     Serial.println("Resetting WiFi config");
     wm.resetSettings();
-    
+    displayFunctions->initialiseDisplay();;
+    uint timer = millis();
+    displayFunctions->DisplaySecretSanta();
+    LoadAppSettings();
+    while(millis()<timer+5000L){}
+    timer=millis();
+    displayFunctions->DisplayWemHackLogo();
     AddParameters();
-    
     // wm.setMenu(menu,6);
     std::vector<const char *> menu = {"wifi","info","param","close","sep","restart","exit"};
     wm.setMenu(menu);
 
     // set dark theme
     wm.setClass("invert");
-
+    while(millis()<timer+5000L){}
+    displayFunctions->DisplayYpsilonLogo();
+    displayFunctions->DisplayPowerOff(); //Saves power
     //set static ip
     // wm.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0)); // set static ip,gw,sn
     // wm.setShowStaticFields(true); // force show static ip fields
@@ -37,9 +42,11 @@ bool WiFiManagerApp::Run(){
     
     // wm.setBreakAfterConfig(true);   // always exit configportal even if wifi save fail
     bool res;
+    
     // res = wm.autoConnect(); // auto generated AP name from chipid
-    res = wm.autoConnect("YpsillonBox"); // anonymous ap
+    res = wm.autoConnect("YpsilonBox"); // anonymous ap
     // res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
+    
 
     if(!res) {
         return false;
@@ -48,12 +55,11 @@ bool WiFiManagerApp::Run(){
     else {
         //if you get here you have connected to the WiFi    
         Serial.println("connected...yeey :), restarting the app"); //If i don't restart there is not enough memory in the heap to run the apps., Wifimanager doesn't clean up...
-        wifi_secrets[0].SSID = wm.getWiFiSSID();
-        wifi_secrets[0].Pass = wm.getWiFiPass();
-                
+        WiFiSecrets wiFiSecrets;
+        wiFiSecrets.SSID = wm.getWiFiSSID();
+        wiFiSecrets.Pass = wm.getWiFiPass();
+        StoreSettings(&wiFiSecrets);
         return true;
-
-
     }
 }
 
@@ -93,8 +99,9 @@ void WiFiManagerApp::AddParameters(){
 
 void WiFiManagerApp::saveParamCallback(){
   Serial.println("[CALLBACK] saveParamCallback fired");
-  //Getting the value of the radio buttons from the server
   
+
+
   String programSelection;
   if(wm.server->hasArg("program_selection")) {
     programSelection = wm.server->arg("program_selection");
@@ -112,8 +119,8 @@ void WiFiManagerApp::saveParamCallback(){
   }
 
   Serial.print("Submitted API key = ");
-  gold_settings->gold_api_key = strdup(API_key_inputfield->getValue());
-  Serial.println(gold_settings->gold_api_key);
+  goldAppSettings.gold_api_key = strdup(API_key_inputfield->getValue());
+  Serial.println(goldAppSettings.gold_api_key);
 
   Serial.print("Submitted Certificate Thumbprint = ");
   const char* thumprint=cert_thumbprint_inputfield->getValue();
@@ -139,7 +146,7 @@ void WiFiManagerApp::saveParamCallback(){
     Serial.print(fingerprint[i]);
     Serial.print(" ");
   }
-  memcpy(gold_settings->fingerprint, fingerprint, sizeof(uint8_t)*20);
+  memcpy(goldAppSettings.fingerprint, fingerprint, sizeof(uint8_t)*20);
 
 
   //Careful : checkbox returns Null if not selected and the value of above defined when selected.
@@ -152,3 +159,34 @@ void WiFiManagerApp::saveParamCallback(){
   Serial.println(checkBoxSelection);
   */
 }
+
+void WiFiManagerApp::LoadAppSettings(){
+  //recovering the API settings from the file system depending on the running application.
+  initFS();
+  if (!LittleFS.exists(F("/GoldAPP.txt"))){
+    Serial.println("Gold API Settings not found in filesystem, writing default values.");
+    uint8_t fingerprint[20] = {0x82, 0xba, 0x9b, 0x98, 0xf5, 0x32, 0x4a, 0x8a, 0xe3, 0xc1, 0xb0, 0x3c, 0x7a, 0xc2, 0xd3, 0x3f, 0xdf, 0xf1, 0xdb, 0x98};
+    memcpy(goldAppSettings.fingerprint, fingerprint, sizeof(uint8_t)*20);
+    goldAppSettings.gold_api_key = "goldapi-dwpk2uki9n7dtq-io";
+    StoreSettings(goldAppSettings);
+  }
+  else{
+    Serial.println("File with Gold API settings found in filesystem, attempting recovery");
+    goldAppSettings = RecoverGoldAppSettings();
+  }
+  if (!LittleFS.exists(F("/WeatherAPP.txt"))){
+    Serial.println("Weather API Settings not found in filesystem, writing default values.");
+    weatherAppSettings.weather_api_key  = "9acbbeebe93eb800c59129e05af24db6";// See: https://openweathermap.org/  // It's free to get an API key, but don't take more than 60 readings/minute!
+    weatherAppSettings.City             = "GENK";                            // Your home city See: http://bulk.openweathermap.org/sample/
+    weatherAppSettings.Country          = "BE";                              // Your _ISO-3166-1_two-letter_country_code country code, on OWM find your nearest city and the country code is displayed
+                                                                // https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
+    weatherAppSettings.Language         = "NL";                  // NOTE: Only the weather description is translated by OWM
+                                                                // Examples: Arabic (AR) Czech (CZ) English (EN) Greek (EL) Persian(Farsi) (FA) Galician (GL) Hungarian (HU) Japanese (JA)
+                                                                // Korean (KR) Latvian (LA) Lithuanian (LT) Macedonian (MK) Slovak (SK) Slovenian (SL) Vietnamese (VI)
+    StoreSettings(weatherAppSettings);
+  }
+  else{
+    Serial.println("File with Weather API settings found in filesystem, attempting recovery");
+    weatherAppSettings = RecoverWeatherAppSettings();
+  }
+} 

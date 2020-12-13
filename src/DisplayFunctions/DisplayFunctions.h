@@ -49,6 +49,10 @@ class DisplayFunctions {
   void DisplayWeather();
   void DisplayGoldCourse();
   void DisplayNoData();
+  void DisplayYpsilonLogo();
+  void DisplayWemHackLogo();
+  void DisplaySecretSanta();
+
 
   //general
   void initialiseDisplay();
@@ -89,8 +93,5 @@ class DisplayFunctions {
   void drawStringMaxWidth(int x, int y, uint text_width, String text, alignment align);
   void DisplayWxPerson(int x, int y, String IconName);
   void DisplayGoldPrices();
-  void DisplayYpsilonLogo();
-  void DisplayWemHackLogo();
-  void DisplaySecretSanta();
 };
 #endif

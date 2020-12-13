@@ -15,7 +15,7 @@
 class GoldApp{
     
     private:
-    Gold_APP_information *settings;
+    GoldAppSettings *settings;
     DisplayFunctions* displayFunctions;                                 //To access the displayFunction
     String* Time_str;
     String* Date_str;
@@ -23,7 +23,7 @@ class GoldApp{
     GoldCourse_record_type  CurrentCourses[1];  
 
     public:
-    GoldApp(Gold_APP_information* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool metric);
+    GoldApp(GoldAppSettings* _settings,DisplayFunctions* _displayFunctions, String* _Time_str, String* _Date_str, bool metric);
     void Run();
 
     private :

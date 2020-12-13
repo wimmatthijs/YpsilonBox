@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-struct Weather_APP_information{
+struct WeatherAppSettings{
   char* City;
   char* Country;
   char* Language;
@@ -42,7 +42,7 @@ typedef struct { // For current Day and Day 1, 2, 3, etc
   int      Timezone;
 } Forecast_record_type;
 
-struct Gold_APP_information{
+struct GoldAppSettings{
   uint8_t fingerprint[20];
   char* gold_api_key;
 }; 
@@ -73,6 +73,13 @@ struct WiFiSecrets{
   String Pass;
 }; 
 
+struct ProgramSettings{
+  bool metric;
+  bool GoldActive;
+  long GoldHour;
+  bool WeatherActive;
+  long WeatherHour;
+};
 
 
 #endif /* ifndef FORECAST_RECORD_H_ */

@@ -4,10 +4,13 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
 #include "datatypes.h"
+#include "Filesystem.h"
+#include "DisplayFunctions/DisplayFunctions.h"
 
 class WiFiManagerApp{
 
         private:
+        DisplayFunctions* displayFunctions;                                 //To access the displayFunctions
         WiFiManager wm;
         const char* program_selection_str =
         "<p>Please select e-paper mode:</p>"
@@ -24,19 +27,19 @@ class WiFiManagerApp{
         WiFiManagerParameter* cert_thumbprint;
         WiFiManagerParameter* API_key_inputfield;
         WiFiManagerParameter* cert_thumbprint_inputfield;
-        Gold_APP_information* gold_settings;
-        Weather_APP_information* weather_settings;
-        WiFiSecrets* wifi_secrets;
-        WiFiSecrets testsecret = {"Wimetereteez","cdcdscezfezsczdezs"};
-        
+
+        WeatherAppSettings weatherAppSettings;
+        GoldAppSettings goldAppSettings;
+       
 
         public:
-        WiFiManagerApp(Gold_APP_information* _gold_settings,Weather_APP_information* _weather_settings, WiFiSecrets* _wifi_secrets);
+        WiFiManagerApp(DisplayFunctions* _displayFunctions);
         bool Run();
 
         private:
         void AddParameters();
         void saveParamCallback();
+        void LoadAppSettings();
 
 };
 #endif
