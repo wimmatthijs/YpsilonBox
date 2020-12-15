@@ -1,5 +1,5 @@
-#ifndef GOLDAPP_H_
-#define GOLDAPP_H_
+#ifndef GOLD_APP_H_
+#define GOLD_APP_H_
 
 #include <Arduino.h>
 

@@ -17,7 +17,7 @@ void WeatherApp::Run(){
   displayFunctions->setTimeStrings(Time_str, Date_str);
   byte Attempts = 1;
   WiFiClient client;   // wifi client object
-  while ((ReadWeatherSuccess == false && ReadForecastSuccess == false) && Attempts <= 3) { // Try up-to 3 times for Weather and Forecast data
+  while ((ReadWeatherSuccess == false && ReadForecastSuccess == false) && Attempts <= 2) { // Try up-to 2 times for Weather and Forecast data
     if (ReadWeatherSuccess  == false) ReadWeatherSuccess  = obtain_wx_data(client, "weather");
     if (ReadForecastSuccess == false) ReadForecastSuccess = obtain_wx_data(client, "forecast");
     Attempts++;
@@ -42,9 +42,9 @@ bool WeatherApp::obtain_wx_data(WiFiClient& client, const String& RequestType) {
   client.stop(); // close any existing connection before sending a new request
   HTTPClient http;
   String uri = "/data/2.5/" + RequestType + "?q=" + settings->City + "," + settings->Country + "&APPID=" + settings->weather_api_key + "&mode=json&units=" + units + "&lang=" + settings->Language;
-  ////Serial.println("requested string : ");
-  ////Serial.print(settings->server);
-  ////Serial.println(uri);
+  //Serial.println("requested string : ");
+  //Serial.print(settings->server);
+  //Serial.println(uri);
   if(RequestType != "weather")
   {
     uri += "&cnt=" + String(4);
@@ -62,7 +62,6 @@ bool WeatherApp::obtain_wx_data(WiFiClient& client, const String& RequestType) {
   else
   {
     //Serial.printf("connection failed, error: %s", http.errorToString(httpCode).c_str());
-    displayFunctions->DisplayServerNotFound("Weatherserver?");
     client.stop();
     http.end();
     return false;
@@ -115,7 +114,7 @@ bool WeatherApp::DecodeWeather(WiFiClient& json, String Type) {
     WeatherConditions[0].Timezone    = root["timezone"].as<int>();                    //Serial.println("TZon: "+String(WeatherConditions[0].Timezone));
     }
   if (Type == "forecast") {
-    ////Serial.println(json);
+    //Serial.println(json);
     //Serial.print(F("\nReceiving Forecast period - ")); //------------------------------------------------
     JsonArray list                    = root["list"];
     for (byte r = 0; r < 4; r++) {

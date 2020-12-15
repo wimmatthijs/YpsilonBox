@@ -3,11 +3,11 @@
 
 void initFS(){
   if(!FSReady){
-    Serial.print(F("Inizializing FS..."));  
+    //Serial.print(F("Inizializing FS..."));  
     if (LittleFS.begin()){
-      Serial.println(F("done."));
+      //Serial.println(F("done."));
     }else{
-      Serial.println(F("fail."));
+      //Serial.println(F("fail."));
     }
     FSReady = true;
   }  
@@ -42,15 +42,15 @@ void StoreSettings(WeatherAppSettings settings){
 void StoreSettings(WiFiSecrets* settings){
   initFS();
   File Appinfo = LittleFS.open(F("/WiFiSecrets.txt"), "w");
-  Serial.println("Saving the following info to Flash:");
-  Serial.println(settings[0].SSID);
-  Serial.println(settings[0].Pass);
+  //Serial.println("Saving the following info to Flash:");
+  //Serial.println(settings[0].SSID);
+  //Serial.println(settings[0].Pass);
   String toSave = settings[0].SSID + '\0' + settings[0].Pass + '\0';
-  Serial.println(toSave);
-  Serial.print("Size: ");
-  Serial.println(toSave.length());
+  //Serial.println(toSave);
+  //Serial.print("Size: ");
+  //Serial.println(toSave.length());
   for(uint i=0; i < toSave.length(); i++){
-    Serial.println(toSave[i]);
+    //Serial.println(toSave[i]);
     Appinfo.write(toSave[i]);
   }
   Appinfo.close();
@@ -72,12 +72,12 @@ GoldAppSettings RecoverGoldAppSettings(){
   }
   memcpy (&settings.fingerprint , data , sizeof(settings.fingerprint));
 
-  Serial.println("Info recovered : ");
-  Serial.println(settings.gold_api_key);
+  //Serial.println("Info recovered : ");
+  //Serial.println(settings.gold_api_key);
   for (int i=0;i<20;i++){
-    Serial.print(settings.fingerprint[i]);
+    //Serial.print(settings.fingerprint[i]);
   }
-  Serial.println();
+  //Serial.println();
   return settings;
 }
 
@@ -116,12 +116,12 @@ WeatherAppSettings RecoverWeatherAppSettings(){
   
   Appinfo.close();
 
-  Serial.println("Info recovered : ");
-  Serial.println(settings.City);
-  Serial.println(settings.Country);
-  Serial.println(settings.Language);
-  Serial.println(settings.server);
-  Serial.println(settings.weather_api_key);
+  //Serial.println("Info recovered : ");
+  //Serial.println(settings.City);
+  //Serial.println(settings.Country);
+  //Serial.println(settings.Language);
+  //Serial.println(settings.server);
+  //Serial.println(settings.weather_api_key);
 
   return settings;
 }
@@ -129,30 +129,30 @@ WeatherAppSettings RecoverWeatherAppSettings(){
 WiFiSecrets RecoverWiFiSecrets(){
   initFS();
   WiFiSecrets secrets;
-  Serial.println("Attempting recovery of Wifi Settings");
+  //Serial.println("Attempting recovery of Wifi Settings");
 
   File Appinfo = LittleFS.open(F("/WiFiSecrets.txt"), "r");
   char data[50];
   for (uint i =0; i<50; i++){
     data[i] = Appinfo.read();
-    Serial.println(data[i]);
+    //Serial.println(data[i]);
     if(data[i] == '\0') break;
   }
-  Serial.println(data);
+  //Serial.println(data);
   secrets.SSID = data;
 
   for (uint i =0; i<50; i++){
     data[i] = Appinfo.read();
-    Serial.println(data[i]);
+    //Serial.println(data[i]);
     if(data[i] == '\0') break;
   }
-  Serial.println(data);
+  //Serial.println(data);
   secrets.Pass = data;
   
   Appinfo.close();
-  Serial.println("Secrets recovered : ");
-  Serial.println(secrets.SSID);
-  Serial.println(secrets.Pass);
+  //Serial.println("Secrets recovered : ");
+  //Serial.println(secrets.SSID);
+  //Serial.println(secrets.Pass);
 
   return secrets;
 }
