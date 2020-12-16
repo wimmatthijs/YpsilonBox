@@ -44,28 +44,11 @@ typedef struct { // For current Day and Day 1, 2, 3, etc
 
 struct GoldAppSettings{
   uint8_t fingerprint[20];
-  char* gold_api_key;
+  String gold_api_key;
 }; 
-typedef struct { // For current Day and Day 1, 2, 3, etc
-  long timestamp; // 1607725240                
-  const char* metal; // "XAU"
-  const char* currency; // "USD"
-  const char* exchange; // "FOREXCOM"
-  const char* symbol; // "FOREXCOM:XAUUSD"
-  float prev_close_price_to; // 1836.66
-  float open_price_to; // 1836.66
-  float low_price_to; // 1824.19
+typedef struct { 
   float high_price_to; // 1847.77
-  float prev_close_price_g; // 1836.66
-  float open_price_g; // 1836.66
-  float low_price_g; // 1824.19
   float high_price_g; // 1847.77
-  long open_time; // 1607637600
-  float price; // 1840.13
-  float ch; // 3.47
-  float chp; // 0.19
-  float ask; // 1841.13
-  float bid; // 1839.13
 } GoldCourse_record_type;
 
 struct WiFiSecrets{
@@ -76,9 +59,11 @@ struct WiFiSecrets{
 struct ProgramSettings{
   bool metric;
   bool GoldActive;
-  long GoldHour;
+  long GoldHour; //in minutes from midnight
   bool WeatherActive;
   long WeatherHour;
+  bool LogoActive;
+  long LogoHour;
 };
 
 struct DeepsleepSettings{

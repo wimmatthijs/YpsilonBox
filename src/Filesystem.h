@@ -10,8 +10,10 @@ void initFS();
 void StoreSettings(GoldAppSettings settings);
 void StoreSettings(WeatherAppSettings settings);
 void StoreSettings(WiFiSecrets* settings);
+void StoreSettings(ProgramSettings settings);
 GoldAppSettings RecoverGoldAppSettings();
 WeatherAppSettings RecoverWeatherAppSettings();
 WiFiSecrets RecoverWiFiSecrets();
+ProgramSettings RecoverProgramSettings();
 
 #endif

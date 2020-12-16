@@ -13,5 +13,6 @@ double NormalizedMoonPhase(int d, int m, int y);
 String UnixTimeToString(int unix_time, bool metric);
 String WindDegToDirection(float winddirection);
 float troy_ounce_to_g(float price_in_troyounce);
+bool inRange(long low, long high, long x);
 
 #endif /* ifndef COMMON_FUNCTIONS_H_ */
