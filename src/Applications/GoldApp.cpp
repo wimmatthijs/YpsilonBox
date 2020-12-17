@@ -21,10 +21,10 @@ void GoldApp::Run() {
     filter["high_price"] = true;
     String payload;
     
-    Serial.print("[HTTPS] begin for GOLD...\n");
+    //Serial.print("[HTTPS] begin for GOLD...\n");
     if (https.begin(*client, "https://www.goldapi.io/api/XAU/EUR")) {  // HTTPS
 
-      Serial.print("[HTTPS] GET...\n");
+      //Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
       https.addHeader("x-access-token",settings->gold_api_key);
       https.addHeader("Content-Type","application/json");
@@ -34,7 +34,7 @@ void GoldApp::Run() {
       // httpCode will be negative on error
       if (httpCode > 0) {
         // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+        //Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
         // file found at server
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -45,8 +45,8 @@ void GoldApp::Run() {
           CurrentCourses[0].high_price_to = doc["high_price"]; // 1847.77
           CurrentCourses[0].high_price_g = troy_ounce_to_g(CurrentCourses[0].high_price_to);
 
-          Serial.print("high_price: Troy Ounce ");        Serial.println(CurrentCourses[0].high_price_to);
-          Serial.print("high_price: Gram ");              Serial.println(CurrentCourses[0].high_price_g);
+          //Serial.print("high_price: Troy Ounce ");        //Serial.println(CurrentCourses[0].high_price_to);
+          //Serial.print("high_price: Gram ");              //Serial.println(CurrentCourses[0].high_price_g);
       
           gotGold = true;
         }
@@ -64,10 +64,10 @@ void GoldApp::Run() {
       ErrorMessage();
       return;
     }
-    Serial.print("[HTTPS] begin for Silver...\n");
+    //Serial.print("[HTTPS] begin for Silver...\n");
     if (https.begin(*client, "https://www.goldapi.io/api/XAG/EUR")) {  // HTTPS
 
-      Serial.print("[HTTPS] GET...\n");
+      //Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
       https.addHeader("x-access-token",settings->gold_api_key);
       https.addHeader("Content-Type","application/json");
@@ -76,7 +76,7 @@ void GoldApp::Run() {
       // httpCode will be negative on error
       if (httpCode > 0) {
         // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+        //Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
         // file found at server
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -86,18 +86,18 @@ void GoldApp::Run() {
           CurrentCourses[1].high_price_to = doc["high_price"]; // 1847.77
           CurrentCourses[1].high_price_g = troy_ounce_to_g(CurrentCourses[1].high_price_to);
 
-          Serial.print("high_price: Troy Ounce ");        Serial.println(CurrentCourses[1].high_price_to);
-          Serial.print("high_price: Gram ");              Serial.println(CurrentCourses[1].high_price_g);
+          //Serial.print("high_price: Troy Ounce ");        //Serial.println(CurrentCourses[1].high_price_to);
+          //Serial.print("high_price: Gram ");              //Serial.println(CurrentCourses[1].high_price_g);
 
           gotSilver = true;
-          Serial.println("ending https comms");
+          //Serial.println("ending https comms");
           client->stop();
           https.end();
         }
       }
       else
       {
-        Serial.println("ending https comms");
+        //Serial.println("ending https comms");
         client->stop();
         https.end();
         ErrorMessage();
@@ -110,9 +110,9 @@ void GoldApp::Run() {
       ErrorMessage();
       return;
     }
-    Serial.println("Switching off Wifi for power saving");
+    //Serial.println("Switching off Wifi for power saving");
     WiFi.mode(WIFI_OFF); // Reduces power consumption
-    Serial.println("displaying Gold information");
+    //Serial.println("displaying Gold information");
     if(gotGold && gotSilver){
       displayFunctions->setTimeStrings(Time_str, Date_str);
       displayFunctions->setGoldCourse(CurrentCourses);
@@ -121,7 +121,7 @@ void GoldApp::Run() {
     }
     displayFunctions->DisplayPowerOff();
     SPI.end();
-    Serial.println("All done, exiting program.");
+    //Serial.println("All done, exiting program.");
 }
 
 void GoldApp::ErrorMessage(){

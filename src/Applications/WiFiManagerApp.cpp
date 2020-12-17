@@ -73,64 +73,36 @@ void WiFiManagerApp::AddParameters(){
     //custom parameters input through WiFiManager 
     Serial.println("creating new sections");
     goldAPI_selection = new WiFiManagerParameter(checkboxGoldAPI_str);
-    
-    /* TODO : Figure out why it seems impossible to create a WiFiManagerParameter with a freshly made custom string.
-    #include<sstream> is needed for this
-    int hour = programSettings.GoldHour/60;
-    std::stringstream stringstream;
-    stringstream << "<input value='" << hour << "' style='width: 2em; margin: 0 10px 10px 10px;' size='2' maxlength='2' type='number' id='goldAPI_hours' name='goldAPI_hours' min='0' max='23'>:";
-    const char* HTML = stringstream.str().c_str();
-    Serial.println(HTML);
-    int stringlength = stringstream.str().length();
-    char HTML2[stringlength];
-    for (int i=0;i<stringlength;i++){
-        HTML2[i] = HTML[i];
-    }
-    Serial.println(HTML2);
-    */
     goldAPI_hours = new WiFiManagerParameter(goldAPI_hours_str);
     goldAPI_minutes = new WiFiManagerParameter(goldAPI_minutes_str);
-    //weatherAPI_selection = new WiFiManagerParameter(checkboxWeatherAPI_str);
-    //weatherAPI_hours = new WiFiManagerParameter(weatherAPI_hours_str);
-    //weatherAPI_minutes = new WiFiManagerParameter(weatherAPI_minutes_str);
+    weatherAPI_selection = new WiFiManagerParameter(checkboxWeatherAPI_str);
+    weatherAPI_hours = new WiFiManagerParameter(weatherAPI_hours_str);
+    weatherAPI_minutes = new WiFiManagerParameter(weatherAPI_minutes_str);
     logo_selection = new WiFiManagerParameter(checkboxLogo_str);
     logo_hours = new WiFiManagerParameter(logo_hours_str);
     logo_minutes = new WiFiManagerParameter(logo_minutes_str);
     Gold_API_key_inputfield = new WiFiManagerParameter("GOLD_API_key_inputfield", "", "", 30, "placeholder='GoldAPI.IO API key'");
     Gold_cert_thumbprint_inputfield = new WiFiManagerParameter("cert_thumbprint_inputfield", "", "", 40, "placeholder='GoldAPI.IO Certificate Thumbprint'");
-    //Weather_API_key_inputfield = new WiFiManagerParameter("Weather_API_key_inputfield", "", "", 30);
-    //Serial.print("weatherAppSettings.weather_api_key: ");
-    //Serial.println(weatherAppSettings.weather_api_key);
-    //Weather_API_key_inputfield->setValue(weatherAppSettings.weather_api_key, strlen(weatherAppSettings.weather_api_key));*/
+    Weather_API_key_inputfield = new WiFiManagerParameter("Weather_API_key_inputfield", "", "", 30, "placeholder='GoldAPI.IO API key'");
 
-    //Careful : checkbox returns Null if not selected and the value of below defined when selected.
-    //WiFiManagerParameter checkbox("checkbox", "Een checkbox", "Checkbox selected", 18,"placeholder=\"Custom Field Placeholder\" type=\"checkbox\""); // custom html type
-    //test custom html input type(checkbox)
-    //wm.addParameter(&checkbox); 
-    // test custom html(radio)
     Serial.println("Adding paramaters to wifimanager");
     wm.addParameter(goldAPI_selection);
     wm.addParameter(goldAPI_hours);
     wm.addParameter(goldAPI_minutes);
-    //wm.addParameter(weatherAPI_selection);
-    //wm.addParameter(weatherAPI_hours);
-    //wm.addParameter(weatherAPI_minutes);
+    wm.addParameter(weatherAPI_selection);
+    wm.addParameter(weatherAPI_hours);
+    wm.addParameter(weatherAPI_minutes);
     wm.addParameter(logo_selection);
     wm.addParameter(logo_hours);
     wm.addParameter(logo_minutes);
-    // add a custom input field
     wm.addParameter(Gold_API_key_inputfield);
     wm.addParameter(Gold_cert_thumbprint_inputfield);
-    //wm.addParameter(Weather_API_key_inputfield);
+    wm.addParameter(Weather_API_key_inputfield);
     
 
     Serial.println("Setting Callback Function");
     wm.setSaveParamsCallback(std::bind(&WiFiManagerApp::saveParamCallback, this));
-
-    // custom menu via array or vector
-    // 
-    // menu tokens, "wifi","wifinoscan","info","param","close","sep","erase","restart","exit" (sep is seperator) (if param is in menu, params will not show up in wifi page!)
-    // const char* menu[] = {"wifi","info","param","sep","restart","exit"}; 
+    return;
 }
 
 void WiFiManagerApp::saveParamCallback(){
@@ -143,14 +115,14 @@ void WiFiManagerApp::saveParamCallback(){
   }
   else{
     programSettings.GoldActive = false;
-  }/*
+  }
   if(wm.server->hasArg("choice2")) {
     Serial.println("WEATHER API SELECTED");
     programSettings.WeatherActive = true;
   }
   else{
     programSettings.WeatherActive = false;
-  }*/
+  }
   if(wm.server->hasArg("choice3")) {
     Serial.println("LOGO SELECTED");
     programSettings.LogoActive = true;
@@ -167,7 +139,7 @@ void WiFiManagerApp::saveParamCallback(){
     Serial.print("goldAPI_minutes:");
     programSettings.GoldHour += strtol(wm.server->arg("goldAPI_minutes").c_str(),NULL,10);
     Serial.println(programSettings.GoldHour);
-  }/*
+  }
   if(wm.server->hasArg("weatherAPI_hours")) {
     Serial.print("weatherAPI_hours:");
     programSettings.WeatherHour = strtol(wm.server->arg("weatherAPI_hours").c_str(),NULL,10)*60;
@@ -177,7 +149,7 @@ void WiFiManagerApp::saveParamCallback(){
     Serial.print("weatherAPI_minutes:");
     programSettings.WeatherHour += strtol(wm.server->arg("weatherAPI_minutes").c_str(),NULL,10);
     Serial.println(programSettings.WeatherHour);
-  }*/
+  }
   if(wm.server->hasArg("logo_hours")) {
     Serial.print("logo_hours:");
     programSettings.LogoHour = strtol(wm.server->arg("logo_hours").c_str(),NULL,10)*60;
@@ -200,7 +172,6 @@ void WiFiManagerApp::saveParamCallback(){
   if ((c[0] != '\0')) {
     Serial.print("found the following thumbprint: ");
     Serial.println(c);
-    //TODO : ongepast aangepast naar 10 bytes, ik weet ook niet waarom... het zijn 40 chars en 20 bytes!!!!
     //Conversion of string to fingerprint
     Serial.println("Processing thumbprint");
 
@@ -220,18 +191,22 @@ void WiFiManagerApp::saveParamCallback(){
     }
     Serial.println();
   }
-  /*
-  Serial.print("Submitted Weather API key = ");
-  weatherAppSettings.weather_api_key = strdup(Weather_API_key_inputfield->getValue());
-  Serial.println(weatherAppSettings.weather_api_key);
-  */
+  
+  c = Weather_API_key_inputfield->getValue();
+  if ((c[0] != '\0')) {
+    Serial.print("Setting Gold API KEY to: ");
+    weatherAppSettings.weather_api_key = strdup(c);
+    Serial.println(weatherAppSettings.weather_api_key);
+  }
+
+
   Serial.println("Backing up Program Settings To RTC RAM");
   BackupStateToRTCRAM(programSettings);
   //Serial.println("Backing up Program Settings To Flash");
   //StoreSettings(programSettings);
-  //Serial.println("Backing up Weather App Settings To Flash");
-  //StoreSettings(weatherAppSettings);
-  //Serial.println("Backing up Gold App Settings To Flash");
+  Serial.println("Backing up Weather App Settings To Flash");
+  StoreSettings(weatherAppSettings);
+  Serial.println("Backing up Gold App Settings To Flash");
   StoreSettings(goldAppSettings);
   Serial.println("Backed up all settings, returning");
   return;

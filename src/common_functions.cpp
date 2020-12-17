@@ -67,17 +67,17 @@ String UnixTimeToString(int unix_time, bool metric) {
 //#########################################################################################
 String WindDegToDirection(float winddirection) {
   if (winddirection >= 348.75 || winddirection < 11.25)  return "N";
-  if (winddirection >=  11.25 && winddirection < 33.75)  return "NNE";
-  if (winddirection >=  33.75 && winddirection < 56.25)  return "NE";
-  if (winddirection >=  56.25 && winddirection < 78.75)  return "ENE";
-  if (winddirection >=  78.75 && winddirection < 101.25) return "E";
-  if (winddirection >= 101.25 && winddirection < 123.75) return "ESE";
-  if (winddirection >= 123.75 && winddirection < 146.25) return "SE";
-  if (winddirection >= 146.25 && winddirection < 168.75) return "SSE";
-  if (winddirection >= 168.75 && winddirection < 191.25) return "S";
-  if (winddirection >= 191.25 && winddirection < 213.75) return "SSW";
-  if (winddirection >= 213.75 && winddirection < 236.25) return "SW";
-  if (winddirection >= 236.25 && winddirection < 258.75) return "WSW";
+  if (winddirection >=  11.25 && winddirection < 33.75)  return "NNO";
+  if (winddirection >=  33.75 && winddirection < 56.25)  return "NO";
+  if (winddirection >=  56.25 && winddirection < 78.75)  return "ONO";
+  if (winddirection >=  78.75 && winddirection < 101.25) return "O";
+  if (winddirection >= 101.25 && winddirection < 123.75) return "OZO";
+  if (winddirection >= 123.75 && winddirection < 146.25) return "ZO";
+  if (winddirection >= 146.25 && winddirection < 168.75) return "ZZO";
+  if (winddirection >= 168.75 && winddirection < 191.25) return "Z";
+  if (winddirection >= 191.25 && winddirection < 213.75) return "ZZW";
+  if (winddirection >= 213.75 && winddirection < 236.25) return "ZW";
+  if (winddirection >= 236.25 && winddirection < 258.75) return "WZW";
   if (winddirection >= 258.75 && winddirection < 281.25) return "W";
   if (winddirection >= 281.25 && winddirection < 303.75) return "WNW";
   if (winddirection >= 303.75 && winddirection < 326.25) return "NW";

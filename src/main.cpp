@@ -180,14 +180,6 @@ void NTP_Sync_Callback(){
   CurrentSec  = tm->tm_sec;
   CurrentMinuteCounter = CurrentHour*60 + CurrentMin;
 
-  //SETTING UP SOME DUMMY DATA FOR THE APPS HERE:
-  programSettings.WeatherActive = true;
-  programSettings.WeatherHour = CurrentMinuteCounter;
-  BackupStateToRTCRAM(programSettings);
-  deepsleepSettings.deepSleepTimer = 0;
-  deepsleepSettings.sleptFor = 0;
-  BackupStateToRTCRAM(deepsleepSettings);
-
   Serial.print("Current minute couter: ");
   Serial.println(CurrentMinuteCounter);
   #ifdef METRIC
@@ -211,14 +203,27 @@ void CalculateDeepsleep(){
   }
   //the difference should me more than 5 to be sure the app didn't just launch prematurely.
   long sleeptimeInMintues = 24*60;
-  if(programSettings.GoldActive && programSettings.GoldActive - CurrentMinuteCounter > 5){
-    if(programSettings.GoldHour > CurrentMinuteCounter) sleeptimeInMintues = programSettings.GoldHour - CurrentMinuteCounter;
+  if(programSettings.GoldActive && programSettings.GoldActive-CurrentMinuteCounter > 5){
+      sleeptimeInMintues = programSettings.GoldHour - CurrentMinuteCounter;
+      Serial.print("next app will be gold with a sleeptime of ");
+      Serial.print(sleeptimeInMintues);
+      Serial.println(" minutes");
   }
   if(programSettings.WeatherActive){
-    if(programSettings.WeatherHour - CurrentMinuteCounter > 5 && programSettings.WeatherHour - CurrentMinuteCounter < sleeptimeInMintues) sleeptimeInMintues = programSettings.WeatherHour - CurrentMinuteCounter;
+    if(programSettings.WeatherHour - CurrentMinuteCounter > 5 && programSettings.WeatherHour-CurrentMinuteCounter < sleeptimeInMintues){
+      sleeptimeInMintues = programSettings.WeatherHour - CurrentMinuteCounter;
+      Serial.print("next app will be Weather with a sleeptime of ");
+      Serial.print(sleeptimeInMintues);
+      Serial.println(" minutes");
+    }
   }
   if(programSettings.LogoActive){
-    if(programSettings.LogoHour - CurrentMinuteCounter > 5 && programSettings.LogoHour - CurrentMinuteCounter < sleeptimeInMintues) sleeptimeInMintues = programSettings.LogoHour - CurrentMinuteCounter;
+    if(programSettings.LogoHour - CurrentMinuteCounter > 5 && programSettings.LogoHour - CurrentMinuteCounter < sleeptimeInMintues){
+      sleeptimeInMintues = programSettings.LogoHour - CurrentMinuteCounter;
+      Serial.print("next app will be Logo with a sleeptime of ");
+      Serial.print(sleeptimeInMintues);
+      Serial.println(" minutes");
+    }
   }
   //if the counter is stil at 24hours probably we passed the last program for today... check which program should start tomorrow and at which hour
   if(sleeptimeInMintues == 24*60){
@@ -285,17 +290,6 @@ void DeepsleepMGMT(){
 }
 
 void setup() {
-
-  //SETTING UP SOME DUMMY DATA FOR THE APPS HERE:
-  programSettings.GoldActive = false;
-  programSettings.WeatherActive = true;
-  programSettings.WeatherActive = false;
-  BackupStateToRTCRAM(programSettings);
-  deepsleepSettings.deepSleepTimer = 0;
-  deepsleepSettings.sleptFor = 0;
-  BackupStateToRTCRAM(deepsleepSettings);
-
-
   StartTime = millis();
   Serial.begin(115200);
   pinMode(BUTTON_PIN, INPUT);  

@@ -65,7 +65,7 @@ void DisplayFunctions::DisplayTempHumiSection(int x, int y) {
   displayPointer->setFont(&DejaVu_Sans_Bold_11);
   drawString(x + 57, y + 59, String(WxConditions[0].High, 0) + "'/" + String(WxConditions[0].Low, 0) + "'", CENTER); // Show forecast high and Low, in the font ' is a °
   displayPointer->setTextSize(1);
-  drawString(x + 60,  y + 83, String(WxConditions[0].Humidity, 0) + "% RH", CENTER);                               // Show Humidity
+  drawString(x + 60,  y + 83, String(WxConditions[0].Humidity, 0) + "% RV", CENTER);                               // Show Humidity
 }
 //#########################################################################################
 void DisplayFunctions::DisplayHeadingSection() {
@@ -97,8 +97,8 @@ void DisplayFunctions::DisplayForecastWeather(int x, int y, int offset, int inde
   displayPointer->drawLine(x, y + 13, x + offset, y + 13, GxEPD_BLACK);
   DisplayWxIcon(x + offset / 2 + 1, y + 35, WxForecast[index].Icon, SmallIcon);
   drawString(x + offset / 2, y + 3, String(UnixTimeToString(WxForecast[index].Dt, metric).substring(6,11)), CENTER);
-  Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric).substring(6,11)));
-  Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric)));
+  //Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric).substring(6,11)));
+  //Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric)));
   drawString(x + offset / 2, y + 50, String(WxForecast[index].High, 0) + "/" + String(WxForecast[index].Low, 0), CENTER);
 }
 //#########################################################################################
