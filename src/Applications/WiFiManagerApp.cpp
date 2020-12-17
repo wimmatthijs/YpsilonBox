@@ -22,12 +22,14 @@ bool WiFiManagerApp::Run(){
     displayFunctions->DisplayWemHackLogo();
     AddParameters();
     // wm.setMenu(menu,6);
-    std::vector<const char *> menu = {"wifi","info","param","close","sep","restart","exit"};
+    Serial.println("setting the menu vector");
+    std::vector<const char *> menu = {"wifi","info","param","exit"};
     wm.setMenu(menu);
-
+    Serial.println("inverting");
     // set dark theme
     wm.setClass("invert");
     while(millis()<timer+5000L){yield();}
+    Serial.println("displaying last logo");
     displayFunctions->DisplayYpsilonLogo();
     displayFunctions->DisplayPowerOff(); //Saves power
     //set static ip
@@ -36,6 +38,7 @@ bool WiFiManagerApp::Run(){
     // wm.setShowDnsFields(true);    // force show dns field always
 
     // wm.setConnectTimeout(20); // how long to try to connect for before continuing
+    Serial.println("setting config Portal Timeout");
     wm.setConfigPortalTimeout(300); // auto close configportal after n seconds
     // wm.setCaptivePortalEnable(false); // disable captive portal redirection
     // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
@@ -50,6 +53,7 @@ bool WiFiManagerApp::Run(){
     bool res;
     
     // res = wm.autoConnect(); // auto generated AP name from chipid
+    Serial.println("Calling autoConnect");
     res = wm.autoConnect("YpsilonBox"); // anonymous ap
     // res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
     
@@ -99,10 +103,9 @@ void WiFiManagerApp::AddParameters(){
     wm.addParameter(Gold_cert_thumbprint_inputfield);
     wm.addParameter(Weather_API_key_inputfield);
     
-
     Serial.println("Setting Callback Function");
     wm.setSaveParamsCallback(std::bind(&WiFiManagerApp::saveParamCallback, this));
-    return;
+    Serial.println("Callback function set");
 }
 
 void WiFiManagerApp::saveParamCallback(){

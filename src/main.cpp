@@ -203,7 +203,7 @@ void CalculateDeepsleep(){
   }
   //the difference should me more than 5 to be sure the app didn't just launch prematurely.
   long sleeptimeInMintues = 24*60;
-  if(programSettings.GoldActive && programSettings.GoldActive-CurrentMinuteCounter > 5){
+  if(programSettings.GoldActive && programSettings.GoldHour-CurrentMinuteCounter > 5){
       sleeptimeInMintues = programSettings.GoldHour - CurrentMinuteCounter;
       Serial.print("next app will be gold with a sleeptime of ");
       Serial.print(sleeptimeInMintues);
@@ -243,6 +243,17 @@ void CalculateDeepsleep(){
     Serial.print("adding the minimum of the apps (next application to start tomorrow): ");
     Serial.println(minimum);
     sleeptimeInMintues += minimum;
+  }
+  if(sleeptimeInMintues > 180){
+    Serial.println("compensating for a long sleeptime");
+    long additionalminutes = (sleeptimeInMintues%60 -3)*5;
+    Serial.println("additional minutes: ");
+    Serial.print(additionalminutes);
+    sleeptimeInMintues += additionalminutes;
+  }
+  if(sleeptimeInMintues < 10){
+    Serial.println("compensating for a short sleeptime (1 minute)");
+    sleeptimeInMintues -= 1;
   }
   deepsleepSettings.deepSleepTimer = sleeptimeInMintues*60;
   Serial.print("going to sleep for ");
@@ -313,7 +324,7 @@ void setup() {
     Serial.println("RTC synced, Entering applications");
     Serial.print("GoldHour is set to: ");
     Serial.println(programSettings.GoldHour);   
-    if(programSettings.GoldActive && inRange(programSettings.GoldHour-5LL, programSettings.GoldHour+5LL, CurrentMinuteCounter)){
+    if(programSettings.GoldActive && inRange(programSettings.GoldHour-5LL, programSettings.GoldHour, CurrentMinuteCounter)){
       goldAppSettings = RecoverGoldAppSettings();
       Serial.println("GoldApp will be started");
       GoldApp goldApp(&goldAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
@@ -321,7 +332,7 @@ void setup() {
     }
     Serial.print("WeatherHour is set to: ");
     Serial.println(programSettings.WeatherHour);
-    if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour+5LL, CurrentMinuteCounter)){
+    if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour, CurrentMinuteCounter)){
       weatherAppSettings = RecoverWeatherAppSettings();
       Serial.println("WeatherApp will be started");
       WeatherApp weatherApp(&weatherAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
@@ -329,7 +340,7 @@ void setup() {
     }
     Serial.print("LogoHour is set to: ");
     Serial.println(programSettings.LogoHour);
-    if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour+5LL, CurrentMinuteCounter)){
+    if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour, CurrentMinuteCounter)){
       Serial.println("LogoApp will be started");
       LogosApp logosApp(&displayFunctions);
       logosApp.Run();
