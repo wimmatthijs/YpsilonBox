@@ -14,8 +14,8 @@
 class WeatherApp{
 
     private:
-    Forecast_record_type  WeatherConditions[1];                                //reference to used WeatherConditions
-    Forecast_record_type  WeatherForecast[4];                                  //reference to used WeatherConditions
+    CurrentWeatherData  WeatherConditions[1];                                //reference to used WeatherConditions
+    ForecastWeatherData  WeatherForecast[4];                                  //reference to used WeatherConditions
     WeatherAppSettings* settings;                                  //rererence to object that contains the used settings
     DisplayFunctions* displayFunctions;                                 //To access the displayFunctions
     String* Time_str;
@@ -27,7 +27,8 @@ class WeatherApp{
     void Run();
 
     private:
-    bool obtain_wx_data(WiFiClient &client, const String &RequestType);
-    bool DecodeWeather(WiFiClient &json, String Type);
+    bool obtain_weather_data(WiFiClient &client, const String &jsonfilter);
+    bool DecodeCurrentWeather(WiFiClient &json);
+    bool DecodeForecastWeather(WiFiClient &json);
 };
 #endif

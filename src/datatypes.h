@@ -4,43 +4,38 @@
 #include <Arduino.h>
 
 struct WeatherAppSettings{
-  char* City;
+  char* Latitude; //saving as char, will only be used to form strings
+  char* Longitude;
   char* Country;
   char* Language;
   char* server = "api.openweathermap.org";
   char* weather_api_key;
 };
 
-typedef struct { // For current Day and Day 1, 2, 3, etc
-  int      Dt;
-  String   Period;
+typedef struct {
   String   Icon;
-  String   Trend;
-  String   Main0;
   String   Forecast0;
   String   Forecast1;
   String   Forecast2;
-  String   Description;
-  String   Time;
-  String   Country;
-  float    lat;
-  float    lon;
   float    Temperature;
   float    Humidity;
   float    High;
   float    Low;
   float    Winddir;
   float    Windspeed;
+  int      Timezone;
+} CurrentWeatherData;
+
+typedef struct {
+  int      Dt;
+  String   Icon;
+  float    Temperature;
+  float    High;
+  float    Low;
   float    Rainfall;
-  float    Snowfall;
-  float    Pop;
-  float    Pressure;
-  int      Cloudcover;
-  int      Visibility;
   int      Sunrise;
   int      Sunset;
-  int      Timezone;
-} Forecast_record_type;
+} ForecastWeatherData;
 
 struct GoldAppSettings{
   uint8_t fingerprint[20];

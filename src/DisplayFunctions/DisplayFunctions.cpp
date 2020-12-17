@@ -18,7 +18,7 @@ void DisplayFunctions::initialiseDisplay() {
 }
 
 //#########################################################################################
-void DisplayFunctions::setWxReadings(Forecast_record_type*  _WxConditions, Forecast_record_type*  _WxForecast){
+void DisplayFunctions::setWxReadings(CurrentWeatherData*  _WxConditions, ForecastWeatherData*  _WxForecast){
   WxConditions = _WxConditions;
   WxForecast = _WxForecast;
 }
@@ -46,17 +46,6 @@ void DisplayFunctions::DisplayGoldCourse() {                         // 1.54" e-
   DisplayHeadingSection();                                        // Top line of the display
   DisplayGoldPrices();
   displayPointer->display(false);                                 // Full screen update mode
-}
-//#########################################################################################
-void DisplayFunctions::DisplayFunctions::DisplayNoData() {                                    // 1.54" e-paper display is 200x200 resolution
-  int x = 0;
-  int y = 112;
-  displayPointer->drawRect(x, y - 4, SCREEN_WIDTH, 28, GxEPD_BLACK);
-  String Wx_Description = WxConditions[0].Forecast0;
-  Wx_Description += " ## No Weather ##";
-  Wx_Description += " ## No Forecast ##";
-  displayPointer->setFont(&DejaVu_Sans_Bold_11);
-  drawStringMaxWidth(x + 2, y - 2, 27, TitleCase(Wx_Description), LEFT);
 }
 //#########################################################################################
 void DisplayFunctions::DisplayPowerOff(){
@@ -107,12 +96,10 @@ void DisplayFunctions::DisplayForecastWeather(int x, int y, int offset, int inde
   displayPointer->drawRect(x, y, offset, 65, GxEPD_BLACK);
   displayPointer->drawLine(x, y + 13, x + offset, y + 13, GxEPD_BLACK);
   DisplayWxIcon(x + offset / 2 + 1, y + 35, WxForecast[index].Icon, SmallIcon);
-  drawString(x + offset / 2, y + 3, String(UnixTimeToString(WxForecast[index].Dt + WxConditions[0].Timezone, metric).substring(0,5)), CENTER);
+  drawString(x + offset / 2, y + 3, String(UnixTimeToString(WxForecast[index].Dt, metric).substring(6,11)), CENTER);
+  Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric).substring(6,11)));
+  Serial.println(String(UnixTimeToString(WxForecast[index].Dt, metric)));
   drawString(x + offset / 2, y + 50, String(WxForecast[index].High, 0) + "/" + String(WxForecast[index].Low, 0), CENTER);
-}
-//#########################################################################################
-void DisplayFunctions::DisplayRain(int x, int y) {
-  if (WxForecast[1].Rainfall > 0) drawString(x, y, String(WxForecast[1].Rainfall, 3) + (metric ? "mm" : "in") + " Rain", LEFT); // Only display rainfall if > 0
 }
 //#########################################################################################
 void DisplayFunctions::DisplayWxIcon(int x, int y, String IconName, bool LargeSize) {

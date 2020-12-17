@@ -31,8 +31,10 @@ void StoreSettings(GoldAppSettings settings){
 void StoreSettings(WeatherAppSettings settings){
   initFS();
   File Appinfo = LittleFS.open(F("/WeatherAPP.txt"), "w");
-  unsigned char * data = reinterpret_cast<unsigned char*>(&settings.City); //casting our struct to the right type for saving into the file.
-  Appinfo.write(data, sizeof(settings.City));
+  unsigned char * data = reinterpret_cast<unsigned char*>(&settings.Latitude); //casting our struct to the right type for saving into the file.
+  Appinfo.write(data, sizeof(settings.Latitude));
+  data = reinterpret_cast<unsigned char*>(&settings.Longitude); //casting our struct to the right type for saving into the file.
+  Appinfo.write(data, sizeof(settings.Longitude));
   data = reinterpret_cast<unsigned char*>(&settings.Country); //casting our struct to the right type for saving into the file.
   Appinfo.write(data, sizeof(settings.Country));
   data = reinterpret_cast<unsigned char*>(&settings.Language); //casting our struct to the right type for saving into the file.
@@ -112,10 +114,15 @@ WeatherAppSettings RecoverWeatherAppSettings(){
   File Appinfo = LittleFS.open(F("/WeatherAPP.txt"), "r");
 
   uint8_t data[sizeof(settings.weather_api_key)];
-  for (uint i =0; i< sizeof(settings.City); i++){
+  for (uint i =0; i< sizeof(settings.Latitude); i++){
     data[i] = Appinfo.read();
   }
-  memcpy (&settings.City , data , sizeof(settings.City));
+  memcpy (&settings.Latitude , data , sizeof(settings.Latitude));
+
+  for (uint i =0; i< sizeof(settings.Longitude); i++){
+    data[i] = Appinfo.read();
+  }
+  memcpy (&settings.Longitude , data , sizeof(settings.Longitude));
 
   for (uint i =0; i< sizeof(settings.Country); i++){
     data[i] = Appinfo.read();
@@ -141,7 +148,8 @@ WeatherAppSettings RecoverWeatherAppSettings(){
   Appinfo.close();
 
   Serial.println("Info recovered : ");
-  Serial.println(settings.City);
+  Serial.println(settings.Longitude);
+  Serial.println(settings.Latitude);
   Serial.println(settings.Country);
   Serial.println(settings.Language);
   Serial.println(settings.server);

@@ -16,7 +16,7 @@
 #include "common_functions.h"   //Some unit conversions etc.
 #include <coredecls.h> //needed to register time was set callback settimeofday_cb TODO: is this needed?
 //Application Libs
-//#include "Applications/WeatherApp.h" // the weather application
+#include "Applications/WeatherApp.h" // the weather application
 #include "Applications/GoldApp.h" // the weather application
 #include "Applications/LogosApp.h" // the weather application
 #include "Applications/WiFiManagerApp.h" //the app to set the WiFi Password and some settings.
@@ -181,8 +181,8 @@ void NTP_Sync_Callback(){
   CurrentMinuteCounter = CurrentHour*60 + CurrentMin;
 
   //SETTING UP SOME DUMMY DATA FOR THE APPS HERE:
-  programSettings.GoldActive = true;
-  programSettings.GoldHour = CurrentMinuteCounter;
+  programSettings.WeatherActive = true;
+  programSettings.WeatherHour = CurrentMinuteCounter;
   BackupStateToRTCRAM(programSettings);
   deepsleepSettings.deepSleepTimer = 0;
   deepsleepSettings.sleptFor = 0;
@@ -287,8 +287,8 @@ void DeepsleepMGMT(){
 void setup() {
 
   //SETTING UP SOME DUMMY DATA FOR THE APPS HERE:
-  programSettings.GoldActive = true;
-  programSettings.WeatherActive = false;
+  programSettings.GoldActive = false;
+  programSettings.WeatherActive = true;
   programSettings.WeatherActive = false;
   BackupStateToRTCRAM(programSettings);
   deepsleepSettings.deepSleepTimer = 0;
@@ -325,7 +325,6 @@ void setup() {
       GoldApp goldApp(&goldAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
       goldApp.Run();
     }
-    /*
     Serial.print("WeatherHour is set to: ");
     Serial.println(programSettings.WeatherHour);
     if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour+5LL, CurrentMinuteCounter)){
@@ -333,7 +332,7 @@ void setup() {
       Serial.println("WeatherApp will be started");
       WeatherApp weatherApp(&weatherAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
       weatherApp.Run();
-    }*/
+    }
     Serial.print("LogoHour is set to: ");
     Serial.println(programSettings.LogoHour);
     if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour+5LL, CurrentMinuteCounter)){

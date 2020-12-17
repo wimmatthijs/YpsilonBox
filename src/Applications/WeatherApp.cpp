@@ -18,8 +18,8 @@ void WeatherApp::Run(){
   byte Attempts = 1;
   WiFiClient client;   // wifi client object
   while ((ReadWeatherSuccess == false && ReadForecastSuccess == false) && Attempts <= 2) { // Try up-to 2 times for Weather and Forecast data
-    if (ReadWeatherSuccess  == false) ReadWeatherSuccess  = obtain_wx_data(client, "weather");
-    if (ReadForecastSuccess == false) ReadForecastSuccess = obtain_wx_data(client, "forecast");
+    if (ReadWeatherSuccess  == false) ReadWeatherSuccess  = obtain_weather_data(client, "current");
+    if (ReadForecastSuccess == false) ReadForecastSuccess = obtain_weather_data(client, "daily");
     Attempts++;
   }
   WiFi.mode(WIFI_OFF); // Reduces power consumption
@@ -35,26 +35,38 @@ void WeatherApp::Run(){
 
 
 //#########################################################################################
-bool WeatherApp::obtain_wx_data(WiFiClient& client, const String& RequestType) {
+bool WeatherApp::obtain_weather_data(WiFiClient& client, const String& jsonfilter) {
   String units = "metric";
   if(!metric)
     units = "imperial";
   client.stop(); // close any existing connection before sending a new request
   HTTPClient http;
-  String uri = "/data/2.5/" + RequestType + "?q=" + settings->City + "," + settings->Country + "&APPID=" + settings->weather_api_key + "&mode=json&units=" + units + "&lang=" + settings->Language;
+  String uri = "/data/2.5/onecall?lat=";
+  uri.concat(settings->Latitude);
+  uri.concat("&lon=");
+  uri.concat(settings->Longitude);
+  String excludes = "&exclude=current,daily,minutely,hourly,alerts&APPID=";
+  excludes.replace(jsonfilter, ""); //throw out of the exclude what was requested
+  uri.concat(excludes);
+  uri.concat(settings->weather_api_key);
+  uri.concat("&mode=json&units=");
+  uri.concat(units);
+  uri.concat("&lang=");
+  uri.concat(settings->Language);  
   Serial.println("requested string : ");
   Serial.print(settings->server);
   Serial.println(uri);
-  if(RequestType != "weather")
-  {
-    uri += "&cnt=" + String(4);
-  }
-  //http.begin(uri,test_root_ca); //HTTPS example connection
+  http.useHTTP10(true);
   http.begin(client, settings->server, 80, uri);
   int httpCode = http.GET();
   if(httpCode == HTTP_CODE_OK) {
     Serial.println("HTTP_OK Received");
-    if (!DecodeWeather(http.getStream(), RequestType)) return false;
+    if(jsonfilter == "current"){
+      if (!DecodeCurrentWeather(http.getStream())) return false;
+    }
+    else if(jsonfilter == "daily"){
+      if (!DecodeForecastWeather(http.getStream())) return false;
+    }
     client.stop();
     http.end();
     return true;
@@ -72,9 +84,89 @@ bool WeatherApp::obtain_wx_data(WiFiClient& client, const String& RequestType) {
 
 //#########################################################################################
 // Problems with stucturing JSON decodes? see here: https://arduinojson.org/assistant/
-bool WeatherApp::DecodeWeather(WiFiClient& json, String Type) {
+bool WeatherApp::DecodeCurrentWeather(WiFiClient& json) {
   Serial.print(F("\nCreating object...and "));
-  // allocate the JsonDocument
+    
+  StaticJsonDocument<160> filter;
+  filter["timezone"] = true;
+  JsonObject filter_current = filter.createNestedObject("current");
+  filter_current["temp"] = true;
+  filter_current["humidity"] = true;
+  filter_current["wind_speed"] = true;
+  filter_current["wind_deg"] = true;
+  JsonObject filter_current_weather_0 = filter_current["weather"].createNestedObject();
+  filter_current_weather_0["description"] = true;
+  filter_current_weather_0["icon"] = true;
+
+  DynamicJsonDocument doc(384);
+  DeserializationError error = deserializeJson(doc, json, DeserializationOption::Filter(filter));
+  if (error) {
+    displayFunctions->DisplayServerNotFound("JSON Fail");
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return false;
+  }
+
+  JsonObject current = doc["current"];
+  
+  WeatherConditions[0].Forecast0   = current["weather"][0]["description"].as<char*>(); Serial.println("For0: "+String(WeatherConditions[0].Forecast0));
+  WeatherConditions[0].Icon        = current["weather"][0]["icon"].as<char*>();        Serial.println("Icon: "+String(WeatherConditions[0].Icon));
+  WeatherConditions[0].Temperature = current["temp"].as<float>();                      Serial.println("Temp: "+String(WeatherConditions[0].Temperature));
+  WeatherConditions[0].Humidity    = current["humidity"].as<float>();                  Serial.println("Humi: "+String(WeatherConditions[0].Humidity));
+  WeatherConditions[0].Windspeed   = current["wind_speed"].as<float>();                Serial.println("WSpd: "+String(WeatherConditions[0].Windspeed));
+  WeatherConditions[0].Winddir     = current["wind_deg"].as<float>();                  Serial.println("WDir: "+String(WeatherConditions[0].Winddir));
+  WeatherConditions[0].Timezone    = doc["timezone"].as<int>();                        Serial.println("TZon: "+String(WeatherConditions[0].Timezone));
+
+  return true;
+}
+
+bool WeatherApp::DecodeForecastWeather(WiFiClient& json){
+  Serial.print(F("\nCreating object...and "));
+  StaticJsonDocument<224> filter;
+
+  JsonObject filter_daily_0 = filter["daily"].createNestedObject();
+  filter_daily_0["dt"] = true;
+
+  JsonObject filter_daily_0_temp = filter_daily_0.createNestedObject("temp");
+  filter_daily_0_temp["min"] = true;
+  filter_daily_0_temp["max"] = true;
+  filter_daily_0["humidity"] = true;
+  filter_daily_0["wind_speed"] = true;
+  filter_daily_0["wind_deg"] = true;
+
+  JsonObject filter_daily_0_weather_0 = filter_daily_0["weather"].createNestedObject();
+  filter_daily_0_weather_0["description"] = true;
+  filter_daily_0_weather_0["icon"] = true;
+  filter_daily_0["rain"] = true;
+
+  DynamicJsonDocument doc(2048);
+  DeserializationError error = deserializeJson(doc, json, DeserializationOption::Filter(filter));
+  if (error) {
+    displayFunctions->DisplayServerNotFound("JSON Fail");
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return false;
+  }
+
+    JsonArray daily = doc["daily"];
+    JsonObject daily_0 = daily[0];
+    WeatherConditions[0].Low         = daily_0["temp"]["min"].as<float>();           Serial.println("TLow: "+String(WeatherConditions[0].Low));
+    WeatherConditions[0].High        = daily_0["temp"]["max"].as<float>();           Serial.println("THig: "+String(WeatherConditions[0].High));
+
+    for (int i=1; i<5;i++){
+      daily_0 = daily[i];
+      int r = i-1;
+      WeatherForecast[r].Dt                = daily_0["dt"].as<int>();                     Serial.println("DTim: "+String(WeatherForecast[r].Dt));
+      WeatherForecast[r].Low               = daily_0["temp"]["min"].as<float>();          Serial.println("TLow: "+String(WeatherForecast[r].Low));
+      WeatherForecast[r].High              = daily_0["temp"]["max"].as<float>();          Serial.println("THig: "+String(WeatherForecast[r].High));
+      WeatherForecast[r].Icon              = daily_0["weather"][0]["icon"].as<char*>();   Serial.println("Icon: "+String(WeatherForecast[r].Icon));
+      WeatherForecast[r].Rainfall          = daily_0["rain"].as<float>();                 Serial.println("Rain: "+String(WeatherForecast[r].Rainfall));
+    }
+
+  return true;
+}
+    
+  /*// allocate the JsonDocument
   DynamicJsonDocument doc(35 * 1024);
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(doc, json);
@@ -90,27 +182,16 @@ bool WeatherApp::DecodeWeather(WiFiClient& json, String Type) {
   Serial.println(" Decoding " + Type + " data");
   if (Type == "weather") {
     // All Serial.println statements are for diagnostic purposes and not required, remove if not needed
-    WeatherConditions[0].lon         = root["coord"]["lon"].as<float>();              Serial.println(" Lon: "+String(WeatherConditions[0].lon));
-    WeatherConditions[0].lat         = root["coord"]["lat"].as<float>();              Serial.println(" Lat: "+String(WeatherConditions[0].lat));
-    WeatherConditions[0].Main0       = root["weather"][0]["main"].as<char*>();        Serial.println("Main: "+String(WeatherConditions[0].Main0));
     WeatherConditions[0].Forecast0   = root["weather"][0]["description"].as<char*>(); Serial.println("For0: "+String(WeatherConditions[0].Forecast0));
     WeatherConditions[0].Forecast1   = root["weather"][1]["description"].as<char*>(); Serial.println("For1: "+String(WeatherConditions[0].Forecast1));
     WeatherConditions[0].Forecast2   = root["weather"][2]["description"].as<char*>(); Serial.println("For2: "+String(WeatherConditions[0].Forecast2));
     WeatherConditions[0].Icon        = root["weather"][0]["icon"].as<char*>();        Serial.println("Icon: "+String(WeatherConditions[0].Icon));
     WeatherConditions[0].Temperature = root["main"]["temp"].as<float>();              Serial.println("Temp: "+String(WeatherConditions[0].Temperature));
-    WeatherConditions[0].Pressure    = root["main"]["pressure"].as<float>();          Serial.println("Pres: "+String(WeatherConditions[0].Pressure));
     WeatherConditions[0].Humidity    = root["main"]["humidity"].as<float>();          Serial.println("Humi: "+String(WeatherConditions[0].Humidity));
     WeatherConditions[0].Low         = root["main"]["temp_min"].as<float>();          Serial.println("TLow: "+String(WeatherConditions[0].Low));
     WeatherConditions[0].High        = root["main"]["temp_max"].as<float>();          Serial.println("THig: "+String(WeatherConditions[0].High));
     WeatherConditions[0].Windspeed   = root["wind"]["speed"].as<float>();             Serial.println("WSpd: "+String(WeatherConditions[0].Windspeed));
     WeatherConditions[0].Winddir     = root["wind"]["deg"].as<float>();               Serial.println("WDir: "+String(WeatherConditions[0].Winddir));
-    WeatherConditions[0].Cloudcover  = root["clouds"]["all"].as<int>();               Serial.println("CCov: "+String(WeatherConditions[0].Cloudcover)); // in % of cloud cover
-    WeatherConditions[0].Visibility  = root["visibility"].as<int>();                  Serial.println("Visi: "+String(WeatherConditions[0].Visibility)); // in metres
-    WeatherConditions[0].Rainfall    = root["rain"]["1h"].as<float>();                Serial.println("Rain: "+String(WeatherConditions[0].Rainfall));
-    WeatherConditions[0].Snowfall    = root["snow"]["1h"].as<float>();                Serial.println("Snow: "+String(WeatherConditions[0].Snowfall));
-    WeatherConditions[0].Country     = root["sys"]["country"].as<char*>();            Serial.println("Ctry: "+String(WeatherConditions[0].Country));
-    WeatherConditions[0].Sunrise     = root["sys"]["sunrise"].as<int>();              Serial.println("SRis: "+String(WeatherConditions[0].Sunrise));
-    WeatherConditions[0].Sunset      = root["sys"]["sunset"].as<int>();               Serial.println("SSet: "+String(WeatherConditions[0].Sunset));
     WeatherConditions[0].Timezone    = root["timezone"].as<int>();                    Serial.println("TZon: "+String(WeatherConditions[0].Timezone));
     }
   if (Type == "forecast") {
@@ -123,37 +204,17 @@ bool WeatherApp::DecodeWeather(WiFiClient& json, String Type) {
       WeatherForecast[r].Temperature       = list[r]["main"]["temp"].as<float>();              Serial.println("Temp: "+String(WeatherForecast[r].Temperature));
       WeatherForecast[r].Low               = list[r]["main"]["temp_min"].as<float>();          Serial.println("TLow: "+String(WeatherForecast[r].Low));
       WeatherForecast[r].High              = list[r]["main"]["temp_max"].as<float>();          Serial.println("THig: "+String(WeatherForecast[r].High));
-      WeatherForecast[r].Pressure          = list[r]["main"]["pressure"].as<float>();          Serial.println("Pres: "+String(WeatherForecast[r].Pressure));
-      WeatherForecast[r].Humidity          = list[r]["main"]["humidity"].as<float>();          Serial.println("Humi: "+String(WeatherForecast[r].Humidity));
-      WeatherForecast[r].Forecast0         = list[r]["weather"][0]["main"].as<char*>();        Serial.println("For0: "+String(WeatherForecast[r].Forecast0));
-      WeatherForecast[r].Forecast1         = list[r]["weather"][1]["main"].as<char*>();        Serial.println("For1: "+String(WeatherForecast[r].Forecast1));
-      WeatherForecast[r].Forecast2         = list[r]["weather"][2]["main"].as<char*>();        Serial.println("For2: "+String(WeatherForecast[r].Forecast2));
       WeatherForecast[r].Icon              = list[r]["weather"][0]["icon"].as<char*>();        Serial.println("Icon: "+String(WeatherForecast[r].Icon));
-      WeatherForecast[r].Description       = list[r]["weather"][0]["description"].as<char*>(); Serial.println("Desc: "+String(WeatherForecast[r].Description));
-      WeatherForecast[r].Cloudcover        = list[r]["clouds"]["all"].as<int>();               Serial.println("CCov: "+String(WeatherForecast[r].Cloudcover)); // in % of cloud cover
-      WeatherForecast[r].Windspeed         = list[r]["wind"]["speed"].as<float>();             Serial.println("WSpd: "+String(WeatherForecast[r].Windspeed));
-      WeatherForecast[r].Winddir           = list[r]["wind"]["deg"].as<float>();               Serial.println("WDir: "+String(WeatherForecast[r].Winddir));
       WeatherForecast[r].Rainfall          = list[r]["rain"]["3h"].as<float>();                Serial.println("Rain: "+String(WeatherForecast[r].Rainfall));
-      WeatherForecast[r].Snowfall          = list[r]["snow"]["3h"].as<float>();                Serial.println("Snow: "+String(WeatherForecast[r].Snowfall));
-      WeatherForecast[r].Pop               = list[r]["pop"].as<float>();                       Serial.println("Pop:  "+String(WeatherForecast[r].Pop));
-      WeatherForecast[r].Period            = list[r]["dt_txt"].as<char*>();                    Serial.println("Peri: "+String(WeatherForecast[r].Period));
     }
     //------------------------------------------
-    float pressure_trend = WeatherForecast[0].Pressure - WeatherForecast[2].Pressure; // Measure pressure slope between ~now and later
-    pressure_trend = ((int)(pressure_trend * 10)) / 10.0; // Remove any small variations less than 0.1
-    WeatherConditions[0].Trend = "0";
-    if (pressure_trend > 0)  WeatherConditions[0].Trend = "+";
-    if (pressure_trend < 0)  WeatherConditions[0].Trend = "-";
-    if (pressure_trend == 0) WeatherConditions[0].Trend = "0";
     if(!metric){
       Serial.println("converting units to imperial");
-      WeatherConditions[0].Pressure = hPa_to_inHg(WeatherConditions[0].Pressure);
       WeatherForecast[1].Rainfall   = mm_to_inches(WeatherForecast[1].Rainfall);
-      WeatherForecast[1].Snowfall   = mm_to_inches(WeatherForecast[1].Snowfall);
     }
   }
   return true;
-}
+}*/
 
 
 

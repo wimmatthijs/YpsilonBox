@@ -6,7 +6,7 @@ LogosApp::LogosApp(DisplayFunctions* _displayFunctions){
 }
 
 void LogosApp::Run(){
-    int counter = millis();
+    uint counter = millis();
     displayFunctions->DisplaySecretSanta();
     while(millis()<counter+3333){yield();}
     counter = millis();

@@ -27,8 +27,8 @@ class DisplayFunctions {
 
   private:
   //dependency injections
-  Forecast_record_type*  WxConditions;  //reference to used WeatherConditions
-  Forecast_record_type*  WxForecast;    //reference to used WeatherConditions
+  CurrentWeatherData*  WxConditions;  //reference to used WeatherConditions
+  ForecastWeatherData*  WxForecast;    //reference to used WeatherConditions
   GoldCourse_record_type* CurrentCourse;   //reference to gold cours information
   GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT>* displayPointer;  //displayPointer
   String* Time_str;
@@ -41,7 +41,7 @@ class DisplayFunctions {
   DisplayFunctions(GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT>* _displayPointer, bool _metric);
   
   //functions for data binding
-  void setWxReadings(Forecast_record_type*  _WxConditions, Forecast_record_type*  _WxForecast);
+  void setWxReadings(CurrentWeatherData*  _WxConditions, ForecastWeatherData*  _WxForecast);
   void setTimeStrings(String* _Time_str, String*_Date_Str);
   void setGoldCourse(GoldCourse_record_type* _CurrentCourse);
   

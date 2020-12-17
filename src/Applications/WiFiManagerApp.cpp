@@ -254,8 +254,9 @@ void WiFiManagerApp::LoadAppSettings(){
   if (!LittleFS.exists(F("/WeatherAPP.txt"))){
     Serial.println("Weather API Settings not found in filesystem, writing default values.");
     weatherAppSettings.weather_api_key  = "9acbbeebe93eb800c59129e05af24db6";// See: https://openweathermap.org/  // It's free to get an API key, but don't take more than 60 readings/minute!
-    weatherAppSettings.City             = "GENK";                            // Your home city See: http://bulk.openweathermap.org/sample/
-    weatherAppSettings.Country          = "BE";                              // Your _ISO-3166-1_two-letter_country_code country code, on OWM find your nearest city and the country code is displayed
+    weatherAppSettings.Latitude         = "51.04408577099022";
+    weatherAppSettings.Longitude        = "5.279147384828176";                            
+    weatherAppSettings.Country          = "BE";                     // Your _ISO-3166-1_two-letter_country_code country code, on OWM find your nearest city and the country code is displayed
                                                                 // https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
     weatherAppSettings.Language         = "NL";                  // NOTE: Only the weather description is translated by OWM
                                                                 // Examples: Arabic (AR) Czech (CZ) English (EN) Greek (EL) Persian(Farsi) (FA) Galician (GL) Hungarian (HU) Japanese (JA)
