@@ -302,7 +302,7 @@ void DeepsleepMGMT(){
 
 void setup() {
   StartTime = millis();
-  Serial.begin(115200);
+  Serial.begin(74880); //Same as ESP8266 bootloader
   pinMode(BUTTON_PIN, INPUT);  
   //If reset button remains pushed, reset the WiFi
   if (digitalRead(BUTTON_PIN) == HIGH){
