@@ -246,9 +246,9 @@ void CalculateDeepsleep(){
   }
   if(sleeptimeInMintues > 180){
     Serial.println("compensating for a long sleeptime");
-    long additionalminutes = (sleeptimeInMintues%60 -3)*5;
-    Serial.println("additional minutes: ");
-    Serial.print(additionalminutes);
+    long additionalminutes = ((sleeptimeInMintues/60)-3)*5;
+    Serial.print("additional minutes: ");
+    Serial.println(additionalminutes);
     sleeptimeInMintues += additionalminutes;
   }
   if(sleeptimeInMintues < 10){
