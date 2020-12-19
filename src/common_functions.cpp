@@ -92,6 +92,6 @@ float troy_ounce_to_g(float price_in_troyounce){
 // Returns true if x is in range [low..high], else false 
 bool inRange(long low, long high, long x) { 
     bool inrange = false;
-    if(x>low && x<high) inrange = true;
+    if(x>=low && x<=high) inrange = true;
     return inrange; 
 } 

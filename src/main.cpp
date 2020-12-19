@@ -324,7 +324,7 @@ void setup() {
     Serial.println("RTC synced, Entering applications");
     Serial.print("GoldHour is set to: ");
     Serial.println(programSettings.GoldHour);   
-    if(programSettings.GoldActive && inRange(programSettings.GoldHour-5LL, programSettings.GoldHour, CurrentMinuteCounter)){
+    if(programSettings.GoldActive && inRange(programSettings.GoldHour-5LL, programSettings.GoldHour+5LL, CurrentMinuteCounter)){
       goldAppSettings = RecoverGoldAppSettings();
       Serial.println("GoldApp will be started");
       GoldApp goldApp(&goldAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
@@ -332,7 +332,7 @@ void setup() {
     }
     Serial.print("WeatherHour is set to: ");
     Serial.println(programSettings.WeatherHour);
-    if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour, CurrentMinuteCounter)){
+    if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour+5LL, CurrentMinuteCounter)){
       weatherAppSettings = RecoverWeatherAppSettings();
       Serial.println("WeatherApp will be started");
       WeatherApp weatherApp(&weatherAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
@@ -340,7 +340,7 @@ void setup() {
     }
     Serial.print("LogoHour is set to: ");
     Serial.println(programSettings.LogoHour);
-    if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour, CurrentMinuteCounter)){
+    if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour+5LL, CurrentMinuteCounter)){
       Serial.println("LogoApp will be started");
       LogosApp logosApp(&displayFunctions);
       logosApp.Run();
