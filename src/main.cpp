@@ -79,7 +79,7 @@ static time_t now;
 String timeString, dateString; // strings to hold time 
 int StartTime, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0;
 long CurrentMinuteCounter; //
-int maxSleepWithoutSync = 12*60*60; //Maximum 12 hours without a timesync. If this time gets exceeded a timesync will be forced.       
+#define MAXSLEEPWITHOUTSYNC 24*60* 60 //standard setting Maximum 24 hours without a timesync. If this time gets exceeded a timesync will be forced.       
 
 //******************************************************************
 // Program
@@ -88,11 +88,12 @@ void ConnectToWifi(){
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
   initFS();
   if (!LittleFS.exists(F("/WiFiSecrets.txt"))){
-      RunWiFiManager();  
+      //Serial.println("No Wifi Settings found, going to sleep as long as possible");
+      deepsleepSettings.deepSleepTimer = INT_MAX;
+      deepsleepSettings.maxDeepSleepWithoutSync = LONG_MAX;
+      BeginSleep();  
   }
   wiFiSecrets = RecoverWiFiSecrets();
-  wiFiSecrets.Pass = "internet4me";
-  wiFiSecrets.SSID = "Wimternet";
   WiFi.begin(wiFiSecrets.SSID, wiFiSecrets.Pass);
   uint counter = millis();
   while (WiFi.status() != WL_CONNECTED) {
@@ -100,11 +101,11 @@ void ConnectToWifi(){
     //TODO : can there be more useful stuff here instead of just waiting?
     displayFunctions.initialiseDisplay();
     delay(100);
-    Serial.print('.');
+    //Serial.print('.');
   }
   if(millis()>counter+10000){ //If WiFi not connected after 10 seconds, stop waiting for connection
       displayFunctions.DisplayNoWiFi();
-      Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
+      //Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
       deepsleepSettings.deepSleepTimer = 3600; //triggers 3 hours of sleep
       BeginSleep(); 
   }
@@ -127,14 +128,15 @@ void RunWiFiManager(){
 
 void ResetWifiRoutine(){
     const int NumberOfSeconds = 3;
-    Serial.print("Resetting WiFi credentials");
+    //Serial.print("Resetting WiFi credentials");
     while(digitalRead(BUTTON_PIN) == HIGH && millis()<StartTime+NumberOfSeconds*1000UL){
-        Serial.print('.');
+        //Serial.print('.');
         yield();
         delay(100);
     }
-    Serial.println();
+    //Serial.println();
     if (millis()>StartTime+NumberOfSeconds*1000UL){
+        deleteAllFiles();
         RunWiFiManager();
     }
 }
@@ -145,7 +147,7 @@ void SetupTime() {
     settimeofday_cb(NTP_Sync_Callback);
   }
   else{
-    Serial.println("time was already synced, using RTC");
+    //Serial.println("time was already synced, using RTC");
   }
   return;
 }
@@ -153,12 +155,12 @@ void SetupTime() {
 void WaitforNTPCallbak(){
   uint timenow = millis();
   while(!rtc_synced && millis()<timenow+5000){ //wait for 5 seconds more for the time to come in...
-    Serial.println("Waiting for timeserver");
+    //Serial.println("Waiting for timeserver");
     yield();
     delay(500);
   }
   if(!rtc_synced){
-    Serial.println("Didn't get an answer from the timeserver, let's go to sleep");
+    //Serial.println("Didn't get an answer from the timeserver, let's go to sleep");
     displayFunctions.DisplayServerNotFound("Time Server?");
     //Not able to set up time correctly, go to sleep and try again 3 hours;
     deepsleepSettings.deepSleepTimer = 3600;
@@ -169,9 +171,9 @@ void WaitforNTPCallbak(){
 void NTP_Sync_Callback(){
   rtc_synced=true;
   deepsleepSettings.sleptFor = 0;   //resetting the slept for counter which keeps track of how long we slept without a timesync.
-  Serial.println("time has synchronized");
-  Serial.print("Current Unix Epoch Time : ");
-  Serial.println(time(nullptr));
+  //Serial.println("time has synchronized");
+  //Serial.print("Current Unix Epoch Time : ");
+  //Serial.println(time(nullptr));
   char output[30], day_output[30];
   now = time(nullptr);
   const tm* tm = localtime(&now);
@@ -180,8 +182,8 @@ void NTP_Sync_Callback(){
   CurrentSec  = tm->tm_sec;
   CurrentMinuteCounter = CurrentHour*60 + CurrentMin;
 
-  Serial.print("Current minute couter: ");
-  Serial.println(CurrentMinuteCounter);
+  //Serial.print("Current minute couter: ");
+  //Serial.println(CurrentMinuteCounter);
   #ifdef METRIC
     strftime(day_output, 30, "%d-%b-%y", tm);     // Displays: 24-Jun-17
     strftime(output, 30, "%H:%M", tm);            // Creates: '14:05'
@@ -191,74 +193,77 @@ void NTP_Sync_Callback(){
   #endif
   dateString = day_output;
   timeString = output;
-  Serial.println(dateString);
-  Serial.println(timeString);
+  //Serial.println(dateString);
+  //Serial.println(timeString);
 }
 
 void CalculateDeepsleep(){
   //if no programs are selected, just sleep as long as you can.
   if(!programSettings.GoldActive && !programSettings.WeatherActive && !programSettings.LogoActive){
+    //Serial.println("no programs activated, going to sleep as long as possible");
     deepsleepSettings.deepSleepTimer = INT_MAX;
+    deepsleepSettings.maxDeepSleepWithoutSync = LONG_MAX;
     return;
   }
+  deepsleepSettings.maxDeepSleepWithoutSync = MAXSLEEPWITHOUTSYNC;
   //the difference should me more than 5 to be sure the app didn't just launch prematurely.
   long sleeptimeInMintues = 24*60;
   if(programSettings.GoldActive && programSettings.GoldHour-CurrentMinuteCounter > 5){
       sleeptimeInMintues = programSettings.GoldHour - CurrentMinuteCounter;
-      Serial.print("next app will be gold with a sleeptime of ");
-      Serial.print(sleeptimeInMintues);
-      Serial.println(" minutes");
+      //Serial.print("next app will be gold with a sleeptime of ");
+      //Serial.print(sleeptimeInMintues);
+      //Serial.println(" minutes (unless overwritten by weahter or logo)");
   }
   if(programSettings.WeatherActive){
     if(programSettings.WeatherHour - CurrentMinuteCounter > 5 && programSettings.WeatherHour-CurrentMinuteCounter < sleeptimeInMintues){
       sleeptimeInMintues = programSettings.WeatherHour - CurrentMinuteCounter;
-      Serial.print("next app will be Weather with a sleeptime of ");
-      Serial.print(sleeptimeInMintues);
-      Serial.println(" minutes");
+      //Serial.print("next app will be Weather with a sleeptime of ");
+      //Serial.print(sleeptimeInMintues);
+      //Serial.println(" minutes (unless overwritten by logo)");
     }
   }
   if(programSettings.LogoActive){
     if(programSettings.LogoHour - CurrentMinuteCounter > 5 && programSettings.LogoHour - CurrentMinuteCounter < sleeptimeInMintues){
       sleeptimeInMintues = programSettings.LogoHour - CurrentMinuteCounter;
-      Serial.print("next app will be Logo with a sleeptime of ");
-      Serial.print(sleeptimeInMintues);
-      Serial.println(" minutes");
+      //Serial.print("next app will be Logo with a sleeptime of ");
+      //Serial.print(sleeptimeInMintues);
+      //Serial.println(" minutes");
     }
   }
   //if the counter is stil at 24hours probably we passed the last program for today... check which program should start tomorrow and at which hour
   if(sleeptimeInMintues == 24*60){
     sleeptimeInMintues -= CurrentMinuteCounter;
-    Serial.print("minutes left until midnight");
-    Serial.println(sleeptimeInMintues);
+    //Serial.print("minutes left until midnight");
+    //Serial.println(sleeptimeInMintues);
     int minimum=24*60;
-    Serial.print("GoldActitve: ");
-    Serial.println(programSettings.GoldActive);
+    //Serial.print("GoldActitve: ");
+    //Serial.println(programSettings.GoldActive);
     if(programSettings.GoldActive) minimum = programSettings.GoldHour;
-    Serial.print("WeatherActitve: ");
-    Serial.println(programSettings.WeatherActive);
+    //Serial.print("WeatherActitve: ");
+    //Serial.println(programSettings.WeatherActive);
     if(programSettings.WeatherActive && programSettings.WeatherHour < minimum ) minimum = programSettings.WeatherHour;
-    Serial.print("LogoActitve: ");
-    Serial.println(programSettings.LogoActive);
+    //Serial.print("LogoActitve: ");
+    //Serial.println(programSettings.LogoActive);
     if(programSettings.LogoActive && programSettings.LogoHour < minimum ) minimum = programSettings.LogoHour; 
-    Serial.print("adding the minimum of the apps (next application to start tomorrow): ");
-    Serial.println(minimum);
+    //Serial.print("adding the minimum of the apps (next application to start tomorrow): ");
+    //Serial.println(minimum);
     sleeptimeInMintues += minimum;
   }
   if(sleeptimeInMintues > 180){
-    Serial.println("compensating for a long sleeptime");
-    long additionalminutes = ((sleeptimeInMintues/60)-3)*5;
-    Serial.print("additional minutes: ");
-    Serial.println(additionalminutes);
+    //Serial.println("compensating for a long sleeptime");
+    long additionalminutes = ((sleeptimeInMintues/60)-3); //add one minute for every hour added, this should more or less hit the spot.
+    //Serial.print("additional minutes: ");
+    //Serial.println(additionalminutes);
     sleeptimeInMintues += additionalminutes;
   }
   if(sleeptimeInMintues < 10){
-    Serial.println("compensating for a short sleeptime (1 minute)");
+    //Serial.println("compensating for a short sleeptime (1 minute)");
     sleeptimeInMintues -= 1;
   }
   deepsleepSettings.deepSleepTimer = sleeptimeInMintues*60;
-  Serial.print("going to sleep for ");
-  Serial.print(sleeptimeInMintues);
-  Serial.println("minutes");
+  //Serial.print("going to sleep for ");
+  //Serial.print(sleeptimeInMintues);
+  //Serial.println("minutes");
   return;
 }
 
@@ -277,17 +282,18 @@ void BeginSleep(){
   deepsleepSettings.sleptFor+=seconds;
   deepsleepSettings.deepSleepTimer-=seconds;
   BackupStateToRTCRAM(deepsleepSettings);
-  Serial.println("Entering " + String(seconds) + "-secs of sleep time");
-  Serial.println("Awake for : " + String((millis() - StartTime) / 1000.0, 3) + "-secs");
-  Serial.println("Starting deep-sleep period...");
+  //Serial.println("Entering " + String(seconds) + "-secs of sleep time");
+  //Serial.println("Awake for : " + String((millis() - StartTime) / 1000.0, 3) + "-secs");
+  //Serial.println("Maximum amount of deepsleep without a sync is "+ String(deepsleepSettings.maxDeepSleepWithoutSync));
+  //Serial.println("Starting deep-sleep period...");
   ESP.deepSleep((seconds) * 1000000LL);
 }
 
 void DeepsleepMGMT(){
   deepsleepSettings = ReadDeepsleepStateFromRTCRAM();
   if(deepsleepSettings.deepSleepTimer > 0){
-    if(deepsleepSettings.sleptFor > maxSleepWithoutSync){
-      Serial.println("Wow, Slept so long that i forgot what time it is, time to resync it");
+    if(deepsleepSettings.sleptFor > deepsleepSettings.maxDeepSleepWithoutSync){
+      //Serial.println("Wow, Slept so long that i forgot what time it is, time to resync it");
       programSettings = ReadProgramStateFromRTCRAM();
       ConnectToWifi();
       SetupTime();
@@ -302,54 +308,54 @@ void DeepsleepMGMT(){
 
 void setup() {
   StartTime = millis();
-  Serial.begin(74880); //Same as ESP8266 bootloader
+  //Serial.begin(74880); //Same as ESP8266 bootloader
   pinMode(BUTTON_PIN, INPUT);  
   //If reset button remains pushed, reset the WiFi
   if (digitalRead(BUTTON_PIN) == HIGH){
     ResetWifiRoutine();
   }
-  Serial.println("Calling DeepsleepMGMT");
+  //Serial.println("Calling DeepsleepMGMT");
   DeepsleepMGMT();
   //No more deepsleep to finish, let's roll the program!!
   programSettings = ReadProgramStateFromRTCRAM();
-  Serial.println("Connect to WiFi");
+  //Serial.println("Connect to WiFi");
   ConnectToWifi();
-  Serial.println("Calling SetupTime");
+  //Serial.println("Calling SetupTime");
   SetupTime();
   if (!rtc_synced){
     WaitforNTPCallbak();
   }
   if (rtc_synced){
     //TODO :use UNIX timestamps here update these settings every time they are passed.
-    Serial.println("RTC synced, Entering applications");
-    Serial.print("GoldHour is set to: ");
-    Serial.println(programSettings.GoldHour);   
+    //Serial.println("RTC synced, Entering applications");
+    //Serial.print("GoldHour is set to: ");
+    //Serial.println(programSettings.GoldHour);   
     if(programSettings.GoldActive && inRange(programSettings.GoldHour-5LL, programSettings.GoldHour+5LL, CurrentMinuteCounter)){
       goldAppSettings = RecoverGoldAppSettings();
-      Serial.println("GoldApp will be started");
+      //Serial.println("GoldApp will be started");
       GoldApp goldApp(&goldAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
       goldApp.Run();
     }
-    Serial.print("WeatherHour is set to: ");
-    Serial.println(programSettings.WeatherHour);
+    //Serial.print("WeatherHour is set to: ");
+    //Serial.println(programSettings.WeatherHour);
     if(programSettings.WeatherActive && inRange(programSettings.WeatherHour-5LL, programSettings.WeatherHour+5LL, CurrentMinuteCounter)){
       weatherAppSettings = RecoverWeatherAppSettings();
-      Serial.println("WeatherApp will be started");
+      //Serial.println("WeatherApp will be started");
       WeatherApp weatherApp(&weatherAppSettings,&displayFunctions,&timeString,&dateString, METRIC);
       weatherApp.Run();
     }
-    Serial.print("LogoHour is set to: ");
-    Serial.println(programSettings.LogoHour);
+    //Serial.print("LogoHour is set to: ");
+    //Serial.println(programSettings.LogoHour);
     if(programSettings.LogoActive && inRange(programSettings.LogoHour-5LL, programSettings.LogoHour+5LL, CurrentMinuteCounter)){
-      Serial.println("LogoApp will be started");
+      //Serial.println("LogoApp will be started");
       LogosApp logosApp(&displayFunctions);
       logosApp.Run();
     }
   }
   //TODO: calculate required deepsleeptime in seconds reffering to a unix epoch time (setting a traget in unix epoch time);
-  Serial.println("Calling to calculate deepsleep");
+  //Serial.println("Calling to calculate deepsleep");
   CalculateDeepsleep();
-  Serial.println("Calling to go into deepsleep");
+  //Serial.println("Calling to go into deepsleep");
   BeginSleep();
 }
 

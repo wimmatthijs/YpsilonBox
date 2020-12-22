@@ -2,12 +2,13 @@
 
 WiFiManagerApp::WiFiManagerApp(DisplayFunctions* _displayFunctions){
   displayFunctions = _displayFunctions;
+  wm.setDebugOutput(false);
 }
 
 bool WiFiManagerApp::Run(){
-    Serial.println("Resetting WiFi config");
+    //Serial.println("Resetting WiFi config");
     wm.resetSettings();
-    Serial.println("Resetting Deepsleep Settings");
+    //Serial.println("Resetting Deepsleep Settings");
     //Reset All DeepsleepSettings to start freshly after this hard reset
     DeepsleepSettings deepsleepSettings;
     deepsleepSettings.sleptFor = 0;
@@ -22,14 +23,14 @@ bool WiFiManagerApp::Run(){
     displayFunctions->DisplayWemHackLogo();
     AddParameters();
     // wm.setMenu(menu,6);
-    Serial.println("setting the menu vector");
+    //Serial.println("setting the menu vector");
     std::vector<const char *> menu = {"wifi","info","param","exit"};
     wm.setMenu(menu);
-    Serial.println("inverting");
+    //Serial.println("inverting");
     // set dark theme
     wm.setClass("invert");
     while(millis()<timer+5000L){yield();}
-    Serial.println("displaying last logo");
+    //Serial.println("displaying last logo");
     displayFunctions->DisplayYpsilonLogo();
     displayFunctions->DisplayPowerOff(); //Saves power
     //set static ip
@@ -38,7 +39,7 @@ bool WiFiManagerApp::Run(){
     // wm.setShowDnsFields(true);    // force show dns field always
 
     // wm.setConnectTimeout(20); // how long to try to connect for before continuing
-    Serial.println("setting config Portal Timeout");
+    //Serial.println("setting config Portal Timeout");
     wm.setConfigPortalTimeout(300); // auto close configportal after n seconds
     // wm.setCaptivePortalEnable(false); // disable captive portal redirection
     // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
@@ -53,18 +54,18 @@ bool WiFiManagerApp::Run(){
     bool res;
     
     // res = wm.autoConnect(); // auto generated AP name from chipid
-    Serial.println("Calling autoConnect");
+    //Serial.println("Calling autoConnect");
     res = wm.autoConnect("YpsilonBox"); // anonymous ap
     // res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
     
 
     if(!res) {
         return false;
-        Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
+        //Serial.println("Failed to connect or hit timeout, going into deepsleep and try again in a few hours...");
     } 
     else {
         //if you get here you have connected to the WiFi    
-        Serial.println("connected...yeey :), restarting the app"); //If i don't restart there is not enough memory in the heap to run the apps., Wifimanager doesn't clean up...
+        //Serial.println("connected...yeey :), restarting the app"); //If i don't restart there is not enough memory in the heap to run the apps., Wifimanager doesn't clean up...
         WiFiSecrets wiFiSecrets;
         wiFiSecrets.SSID = wm.getWiFiSSID();
         wiFiSecrets.Pass = wm.getWiFiPass();
@@ -75,7 +76,7 @@ bool WiFiManagerApp::Run(){
 
 void WiFiManagerApp::AddParameters(){
     //custom parameters input through WiFiManager 
-    Serial.println("creating new sections");
+    //Serial.println("creating new sections");
     goldAPI_selection = new WiFiManagerParameter(checkboxGoldAPI_str);
     goldAPI_hours = new WiFiManagerParameter(goldAPI_hours_str);
     goldAPI_minutes = new WiFiManagerParameter(goldAPI_minutes_str);
@@ -89,7 +90,7 @@ void WiFiManagerApp::AddParameters(){
     Gold_cert_thumbprint_inputfield = new WiFiManagerParameter("cert_thumbprint_inputfield", "", "", 40, "placeholder='GoldAPI.IO Certificate Thumbprint'");
     Weather_API_key_inputfield = new WiFiManagerParameter("Weather_API_key_inputfield", "", "", 30, "placeholder='GoldAPI.IO API key'");
 
-    Serial.println("Adding paramaters to wifimanager");
+    //Serial.println("Adding paramaters to wifimanager");
     wm.addParameter(goldAPI_selection);
     wm.addParameter(goldAPI_hours);
     wm.addParameter(goldAPI_minutes);
@@ -103,80 +104,80 @@ void WiFiManagerApp::AddParameters(){
     wm.addParameter(Gold_cert_thumbprint_inputfield);
     wm.addParameter(Weather_API_key_inputfield);
     
-    Serial.println("Setting Callback Function");
+    //Serial.println("Setting Callback Function");
     wm.setSaveParamsCallback(std::bind(&WiFiManagerApp::saveParamCallback, this));
-    Serial.println("Callback function set");
+    //Serial.println("Callback function set");
 }
 
 void WiFiManagerApp::saveParamCallback(){
-  Serial.println("[CALLBACK] saveParamCallback fired");
+  //Serial.println("[CALLBACK] saveParamCallback fired");
   //Careful : checkbox returns Null if not selected and the value of above defined when selected.
-  Serial.print("Submitted checkbox = ");
+  //Serial.print("Submitted checkbox = ");
   if(wm.server->hasArg("choice1")) {
-    Serial.println("GOLD API SELECTED");
+    //Serial.println("GOLD API SELECTED");
     programSettings.GoldActive = true;
   }
   else{
     programSettings.GoldActive = false;
   }
   if(wm.server->hasArg("choice2")) {
-    Serial.println("WEATHER API SELECTED");
+    //Serial.println("WEATHER API SELECTED");
     programSettings.WeatherActive = true;
   }
   else{
     programSettings.WeatherActive = false;
   }
   if(wm.server->hasArg("choice3")) {
-    Serial.println("LOGO SELECTED");
+    //Serial.println("LOGO SELECTED");
     programSettings.LogoActive = true;
   }
   else{
     programSettings.LogoActive = false;
   }
   if(wm.server->hasArg("goldAPI_hours")) {
-    Serial.print("goldAPI_hours:");
+    //Serial.print("goldAPI_hours:");
     programSettings.GoldHour = strtol(wm.server->arg("goldAPI_hours").c_str(),NULL,10)*60;
-    Serial.println(programSettings.GoldHour);
+    //Serial.println(programSettings.GoldHour);
   }
   if(wm.server->hasArg("goldAPI_minutes")) {
-    Serial.print("goldAPI_minutes:");
+    //Serial.print("goldAPI_minutes:");
     programSettings.GoldHour += strtol(wm.server->arg("goldAPI_minutes").c_str(),NULL,10);
-    Serial.println(programSettings.GoldHour);
+    //Serial.println(programSettings.GoldHour);
   }
   if(wm.server->hasArg("weatherAPI_hours")) {
-    Serial.print("weatherAPI_hours:");
+    //Serial.print("weatherAPI_hours:");
     programSettings.WeatherHour = strtol(wm.server->arg("weatherAPI_hours").c_str(),NULL,10)*60;
-    Serial.println(programSettings.WeatherHour);
+    //Serial.println(programSettings.WeatherHour);
   }
   if(wm.server->hasArg("weatherAPI_minutes")) {
-    Serial.print("weatherAPI_minutes:");
+    //Serial.print("weatherAPI_minutes:");
     programSettings.WeatherHour += strtol(wm.server->arg("weatherAPI_minutes").c_str(),NULL,10);
-    Serial.println(programSettings.WeatherHour);
+    //Serial.println(programSettings.WeatherHour);
   }
   if(wm.server->hasArg("logo_hours")) {
-    Serial.print("logo_hours:");
+    //Serial.print("logo_hours:");
     programSettings.LogoHour = strtol(wm.server->arg("logo_hours").c_str(),NULL,10)*60;
-    Serial.println(programSettings.LogoHour);
+    //Serial.println(programSettings.LogoHour);
   }
   if(wm.server->hasArg("logo_minutes")) {
-    Serial.print("logo_minutes:");
+    //Serial.print("logo_minutes:");
     programSettings.LogoHour += strtol(wm.server->arg("logo_minutes").c_str(),NULL,10);
-    Serial.println(programSettings.LogoHour);
+    //Serial.println(programSettings.LogoHour);
   }
   
   const char* c = Gold_API_key_inputfield->getValue();
   if ((c[0] != '\0')) {
-    Serial.print("Setting Gold API KEY to: ");
+    //Serial.print("Setting Gold API KEY to: ");
     goldAppSettings.gold_api_key = strdup(c);
-    Serial.println(goldAppSettings.gold_api_key);
+    //Serial.println(goldAppSettings.gold_api_key);
   }
 
   c = Gold_cert_thumbprint_inputfield->getValue();
   if ((c[0] != '\0')) {
-    Serial.print("found the following thumbprint: ");
-    Serial.println(c);
+    //Serial.print("found the following thumbprint: ");
+    //Serial.println(c);
     //Conversion of string to fingerprint
-    Serial.println("Processing thumbprint");
+    //Serial.println("Processing thumbprint");
 
     char hexstring[3] = {'0','0','\0'};
     uint8_t fingerprint[20];
@@ -188,30 +189,30 @@ void WiFiManagerApp::saveParamCallback(){
       fingerprint[i] = (uint8_t)strtol(hexstring, NULL, 16);
     }
     memcpy(goldAppSettings.fingerprint, fingerprint, sizeof(uint8_t)*20);
-    Serial.print("Set GoldAPI fingerprint to: ");
+    //Serial.print("Set GoldAPI fingerprint to: ");
     for (int i=0;i<20;i++){
-      Serial.print(goldAppSettings.fingerprint[i]);
+      //Serial.print(goldAppSettings.fingerprint[i]);
     }
-    Serial.println();
+    //Serial.println();
   }
   
   c = Weather_API_key_inputfield->getValue();
   if ((c[0] != '\0')) {
-    Serial.print("Setting Gold API KEY to: ");
+    //Serial.print("Setting Gold API KEY to: ");
     weatherAppSettings.weather_api_key = strdup(c);
-    Serial.println(weatherAppSettings.weather_api_key);
+    //Serial.println(weatherAppSettings.weather_api_key);
   }
 
 
-  Serial.println("Backing up Program Settings To RTC RAM");
+  //Serial.println("Backing up Program Settings To RTC RAM");
   BackupStateToRTCRAM(programSettings);
   //Serial.println("Backing up Program Settings To Flash");
   //StoreSettings(programSettings);
-  Serial.println("Backing up Weather App Settings To Flash");
+  //Serial.println("Backing up Weather App Settings To Flash");
   StoreSettings(weatherAppSettings);
-  Serial.println("Backing up Gold App Settings To Flash");
+  //Serial.println("Backing up Gold App Settings To Flash");
   StoreSettings(goldAppSettings);
-  Serial.println("Backed up all settings, returning");
+  //Serial.println("Backed up all settings, returning");
   return;
 }
 
@@ -219,18 +220,18 @@ void WiFiManagerApp::LoadAppSettings(){
   //recovering the API settings from the file system depending on the running application.
   initFS();
   if (!LittleFS.exists(F("/GoldAPP.txt"))){
-    Serial.println("Gold API Settings not found in filesystem, writing default values.");
+    //Serial.println("Gold API Settings not found in filesystem, writing default values.");
     uint8_t fingerprint[20] = {0x82, 0xba, 0x9b, 0x98, 0xf5, 0x32, 0x4a, 0x8a, 0xe3, 0xc1, 0xb0, 0x3c, 0x7a, 0xc2, 0xd3, 0x3f, 0xdf, 0xf1, 0xdb, 0x98};
     memcpy(goldAppSettings.fingerprint, fingerprint, sizeof(uint8_t)*20);
     goldAppSettings.gold_api_key = "goldapi-dwpk2uki9n7dtq-io";
     StoreSettings(goldAppSettings);
   }
   else{
-    Serial.println("File with Gold API settings found in filesystem, attempting recovery");
+    //Serial.println("File with Gold API settings found in filesystem, attempting recovery");
     goldAppSettings = RecoverGoldAppSettings();
   }
   if (!LittleFS.exists(F("/WeatherAPP.txt"))){
-    Serial.println("Weather API Settings not found in filesystem, writing default values.");
+    //Serial.println("Weather API Settings not found in filesystem, writing default values.");
     weatherAppSettings.weather_api_key  = "9acbbeebe93eb800c59129e05af24db6";// See: https://openweathermap.org/  // It's free to get an API key, but don't take more than 60 readings/minute!
     weatherAppSettings.Latitude         = "51.04408577099022";
     weatherAppSettings.Longitude        = "5.279147384828176";                            
@@ -242,7 +243,7 @@ void WiFiManagerApp::LoadAppSettings(){
     StoreSettings(weatherAppSettings);
   }
   else{
-    Serial.println("File with Weather API settings found in filesystem, attempting recovery");
+    //Serial.println("File with Weather API settings found in filesystem, attempting recovery");
     weatherAppSettings = RecoverWeatherAppSettings();
   }
   programSettings = ReadProgramStateFromRTCRAM();

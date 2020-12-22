@@ -4,6 +4,7 @@ void BackupStateToRTCRAM(DeepsleepSettings settings){
   uint8_t byteBuffer[DEEPSLEEPBACKUPLENGTH+4];
   memcpy(&byteBuffer[0], &settings.sleptFor, sizeof(int));
   memcpy(&byteBuffer[4], &settings.deepSleepTimer, sizeof(int));
+  memcpy(&byteBuffer[8], &settings.maxDeepSleepWithoutSync, sizeof(int));
   uint32_t checksum = calculateChecksum(byteBuffer, DEEPSLEEPBACKUPLENGTH+4);
   memcpy(&byteBuffer[DEEPSLEEPBACKUPLENGTH], &checksum, sizeof(int));
   WriteToRTCRAM (DEEPSLEEPSETTINGSADDRESS, byteBuffer, DEEPSLEEPBACKUPLENGTH+4);
@@ -30,6 +31,7 @@ DeepsleepSettings ReadDeepsleepStateFromRTCRAM(){
   if(ReadFromRTCRAMAndCheck(DEEPSLEEPSETTINGSADDRESS,byteBuffer, DEEPSLEEPBACKUPLENGTH+4)){
     memcpy(&settings.sleptFor, &byteBuffer[0], sizeof(int));
     memcpy(&settings.deepSleepTimer, &byteBuffer[4], sizeof(int));
+    memcpy(&settings.maxDeepSleepWithoutSync,&byteBuffer[8], sizeof(int));
   }
   else{
     //Serial.println("Error reading deepsleep settings, putting defaults (sleptFor 0 deepSleepTimer 0)");
@@ -55,7 +57,7 @@ ProgramSettings ReadProgramStateFromRTCRAM(){
     //Serial.println("Error reading Program State settings, putting defaults (metric 1, weahterapp at 9am)");
     //TODO : attempt to restore last settings from the Flash here.
     settings.metric = 1;
-    settings.WeatherActive = 1;
+    settings.WeatherActive = 0;
     settings.WeatherHour = 12*60;
     settings.GoldActive = 0;
     settings.GoldHour = 8*60+30;

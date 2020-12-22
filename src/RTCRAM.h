@@ -10,10 +10,10 @@ extern "C" {
 //number of bytes to be saved in RTC memory, excluding 4 byte CRC
 //We will insert the variables that need to be retained here. in the current conscept 112 bytes. (28 buckets of 4);
 //For good working of the functions the length should alwas be a multipe of 4.
-#define DEEPSLEEPBACKUPLENGTH 8 //2 ints
+#define DEEPSLEEPBACKUPLENGTH 12 //3 ints
 #define DEEPSLEEPSETTINGSADDRESS 100 //place where the information should be written in RTC RAM, every place is a bucket of 4 bytes
 #define PROGRAMBACKUPLENGTH 16 //3 bools and 2 longs
-#define PROGRAMSETTINGSADDRESS 103 //place where the information should be written in RTC RAM
+#define PROGRAMSETTINGSADDRESS 104 //place where the information should be written in RTC RAM
 
 void BackupStateToRTCRAM(DeepsleepSettings settings);
 void BackupStateToRTCRAM(ProgramSettings settings);

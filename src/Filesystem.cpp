@@ -246,3 +246,8 @@ ProgramSettings RecoverProgramSettings(){
   return settings;
 }
 
+void deleteAllFiles(){
+  initFS();
+  LittleFS.format();
+}
+

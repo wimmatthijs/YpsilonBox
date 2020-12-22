@@ -64,6 +64,7 @@ struct ProgramSettings{
 struct DeepsleepSettings{
   int deepSleepTimer = 0; //keeping track of the time left to sleep if sleep for more than 3hours (hw limitation) is required.
   int sleptFor      = 0;  //keeps track of how many seconds we slept.
+  long maxDeepSleepWithoutSync;
 };
 
 

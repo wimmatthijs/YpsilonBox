@@ -15,5 +15,6 @@ GoldAppSettings RecoverGoldAppSettings();
 WeatherAppSettings RecoverWeatherAppSettings();
 WiFiSecrets RecoverWiFiSecrets();
 ProgramSettings RecoverProgramSettings();
+void deleteAllFiles();
 
 #endif
